@@ -26,13 +26,15 @@ function getRepoPrefix(fallbackName: string): string {
 const pkgPath = path.resolve(__dirname, 'package.json')
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
 const repoPrefix = getRepoPrefix(pkg.name)
+const appVersion = process.env.APP_VERSION || pkg.version
 
 // https://vite.dev/config/
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(appVersion),
     __REPO_PREFIX__: JSON.stringify(repoPrefix),
   },
+
   plugins: [
     react(),
     tailwindcss(),
