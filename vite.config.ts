@@ -23,27 +23,16 @@ function getRepoPrefix(fallbackName: string): string {
   return fallbackName.replace(/[^a-zA-Z0-9-_]/g, '-')
 }
 
-function renameOutputPlugin() {
-  return {
-    name: 'rename-single-file-output',
-    closeBundle() {
-      const pkgPath = path.resolve(__dirname, 'package.json')
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
-      const oldPath = path.resolve(__dirname, 'dist/index.html')
-      const prefix = getRepoPrefix(pkg.name)
-      const newFilename = `${prefix}-v${pkg.version}.html`
-      const newPath = path.resolve(__dirname, `dist/${newFilename}`)
-
-      if (fs.existsSync(oldPath)) {
-        fs.renameSync(oldPath, newPath)
-        console.log(`\n Output file renamed to: dist/${newFilename}\n`)
-      }
-    },
-  }
-}
+const pkgPath = path.resolve(__dirname, 'package.json')
+const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
+const repoPrefix = getRepoPrefix(pkg.name)
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __REPO_PREFIX__: JSON.stringify(repoPrefix),
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -55,10 +44,10 @@ export default defineConfig({
       },
     }),
     viteSingleFile({ removeViteModuleLoader: true }),
-    renameOutputPlugin(),
   ],
   build: {
     assetsInlineLimit: 100000,
   },
 })
+
 

@@ -1,10 +1,40 @@
-import { useState } from 'react';
-import { Shield, Sparkles, RefreshCw, Cpu, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Sparkles, RefreshCw, Cpu, CheckCircle, Download } from 'lucide-react';
 import Generator from './components/Generator';
 import Recoverer from './components/Recoverer';
 
+function downloadOfflineApp() {
+  const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+
+  const repoName = typeof __REPO_PREFIX__ !== 'undefined' ? __REPO_PREFIX__ : 'lior21-wordcrux-slip39';
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+  link.download = `${repoName}-v${version}.html`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<'generate' | 'recover'>('generate');
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        downloadOfflineApp();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const versionString = typeof __APP_VERSION__ !== 'undefined' ? `v${__APP_VERSION__}` : '';
 
   return (
     <div className="min-h-screen bg-[#070a13] text-slate-100 flex flex-col selection:bg-violet-600/30 selection:text-violet-200">
@@ -22,7 +52,7 @@ function App() {
               <p className="text-xs text-slate-400 font-medium">Shamir's Secret Sharing for Mnemonic Seeds</p>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               <CheckCircle className="h-3 w-3" />
@@ -32,13 +62,21 @@ function App() {
               <Cpu className="h-3 w-3" />
               Secrets Stay Local
             </span>
+            <button
+              onClick={downloadOfflineApp}
+              title="Save standalone HTML for offline use (Ctrl+S)"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 transition-colors cursor-pointer"
+            >
+              <Download className="h-3 w-3" />
+              Save Offline App {versionString}
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        
+
         {/* Intro Banner */}
         <section className="text-center space-y-3 max-w-2xl mx-auto mb-6 print-hidden">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-500/10 border border-violet-500/20 rounded-full text-xs text-violet-300 font-medium animate-pulse">
@@ -92,7 +130,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 space-y-2">
           <p>© 2026 WordCrux SLIP-39. Built using standard audited packages for local client-side execution.</p>
           <p className="text-slate-600">
-            For maximum security, download this page and open it on an air-gapped (fully offline) computer.
+            For maximum security, press <kbd className="px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">Ctrl+S</kbd> to download this page and open it on an air-gapped computer.
           </p>
         </div>
       </footer>
@@ -101,3 +139,4 @@ function App() {
 }
 
 export default App;
+
