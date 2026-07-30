@@ -3,8 +3,21 @@ import { Shield, Sparkles, RefreshCw, Cpu, CheckCircle, Download } from 'lucide-
 import Generator from './components/Generator';
 import Recoverer from './components/Recoverer';
 
-function downloadOfflineApp() {
-  const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+async function downloadOfflineApp() {
+  let htmlContent = '';
+  try {
+    const res = await fetch(window.location.href);
+    if (res.ok) {
+      htmlContent = await res.text();
+    }
+  } catch {
+    // fallback if fetch fails
+  }
+
+  if (!htmlContent) {
+    htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  }
+
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -19,6 +32,7 @@ function downloadOfflineApp() {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
 
 function App() {
   const [activeTab, setActiveTab] = useState<'generate' | 'recover'>('generate');
