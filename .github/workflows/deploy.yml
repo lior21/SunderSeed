@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,10 +37,35 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Calculate & Bump Version
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          custom_release_types: "major:Major,minor:Minor,patch:Patch"
+          create_annotated_tag: false
+
+      - name: Update package.json Version
+        run: |
+          NEW_VER="${{ steps.tag_version.outputs.new_version }}"
+          if [ -n "$NEW_VER" ]; then
+            npm version "$NEW_VER" --no-git-tag-version
+          fi
+
       - name: Build Single HTML App
         run: npm run build
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Commit package.json Version Update
+        if: ${{ steps.tag_version.outputs.new_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore(release): bump package.json to ${{ steps.tag_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:${{ github.ref_name }} || echo "Push failed or nothing to push"
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
