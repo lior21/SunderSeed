@@ -87,12 +87,21 @@ export default function Generator() {
         if (g.id !== id) return g;
         const updated = { ...g, [field]: val };
 
-        // Validation: N must not exceed M
+        // Validation rules according to SLIP-39:
+        // 1. Threshold cannot exceed Count
         if (field === "count" && updated.threshold > val) {
           updated.threshold = val;
         }
         if (field === "threshold" && val > updated.count) {
           updated.count = val;
+        }
+
+        // 2. SLIP-39 Rule: If Count > 1, Member Threshold cannot be 1 (Must be >= 2)
+        if (field === "count" && val > 1 && updated.threshold < 2) {
+          updated.threshold = 2;
+        }
+        if (field === "threshold" && val === 1 && updated.count > 1) {
+          updated.count = 1;
         }
         return updated;
       }),
@@ -141,7 +150,11 @@ export default function Generator() {
       }
       setShares(resultShares);
     } catch (err: any) {
-      setError(err.message || "An error occurred during generation.");
+      let msg = err.message || "An error occurred during generation.";
+      if (msg.includes("Creating multiple member shares with member threshold 1 is not allowed")) {
+        msg = "Creating multiple member shares with member threshold 1 is not allowed by SLIP-39. If total shares > 1 for a group, required shares must be at least 2.";
+      }
+      setError(msg);
     }
   };
 
@@ -352,7 +365,7 @@ export default function Generator() {
                               <div className="flex items-center gap-2">
                                 <input
                                   type="range"
-                                  min={1}
+                                  min={group.count > 1 ? 2 : 1}
                                   max={group.count}
                                   value={group.threshold}
                                   onChange={(e) => {
