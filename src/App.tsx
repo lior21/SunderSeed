@@ -4,6 +4,7 @@ import Generator from './components/Generator';
 import Recoverer from './components/Recoverer';
 
 async function downloadOfflineApp() {
+
   let htmlContent = '';
   try {
     const res = await fetch(window.location.href);
@@ -33,15 +34,25 @@ async function downloadOfflineApp() {
   URL.revokeObjectURL(url);
 }
 
-
 function App() {
   const [activeTab, setActiveTab] = useState<'generate' | 'recover'>('generate');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        downloadOfflineApp();
+        // Temporarily swap document title so native browser "Save As" modal pre-fills versioned filename
+        const oldTitle = document.title;
+        const repoName = typeof __REPO_PREFIX__ !== 'undefined' ? __REPO_PREFIX__ : 'lior21-wordcrux-slip39';
+        const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+
+        document.title = `${repoName}-v${version}`;
+
+        // Restore clean tab title shortly after native save dialog opens
+        setTimeout(() => {
+          document.title = oldTitle || 'Wordcrux';
+        }, 1500);
+
+        // Allow native browser Ctrl+S behavior (opens native OS Save As dialog)
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -49,6 +60,7 @@ function App() {
   }, []);
 
   const versionString = typeof __APP_VERSION__ !== 'undefined' ? `v${__APP_VERSION__}` : '';
+
 
   return (
     <div className="min-h-screen bg-[#070a13] text-slate-100 flex flex-col selection:bg-violet-600/30 selection:text-violet-200">
