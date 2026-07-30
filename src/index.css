@@ -1,0 +1,251 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #0b0f19;
+    color: #f3f4f6;
+    font-family:
+      "Outfit",
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Keyframe animations for rich aesthetics */
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 8s infinite ease-in-out;
+}
+
+/* Print Layout Styles */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
+
+  /* Collapse parent elements height/padding to prevent pushing cards to a new page */
+  html,
+  body,
+  #root,
+  main,
+  div.min-h-screen,
+  div.mt-8,
+  div.space-y-8 {
+    background-color: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .print-page {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 10mm 15mm !important;
+    margin-bottom: 0 !important;
+    background: transparent !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    height: 297mm !important;
+    width: 210mm !important;
+  }
+
+  .print-page:last-child {
+    page-break-after: avoid !important;
+  }
+}
+
+/* Common printable card styles */
+.cards-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8mm 10mm;
+}
+
+.share-block {
+  page-break-inside: avoid;
+}
+
+.metadata-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+.metadata-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #1e1b4b;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.metadata-details {
+  font-size: 9px;
+  font-weight: 600;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.card {
+  border: 2px dashed #64748b;
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+  position: relative;
+}
+
+.card::after {
+  content: "✂";
+  position: absolute;
+  top: -11px;
+  left: 62%;
+  transform: translateX(-62%);
+  font-size: 12px;
+  color: #64748b;
+  background: #ffffff;
+  padding: 0 6px;
+}
+
+.words-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.word-cell {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 6px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 34px;
+}
+
+.word-index {
+  font-size: 8px;
+  font-weight: 600;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+.word-text {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  word-break: break-all;
+  line-height: 1;
+}
+
+.print-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8mm;
+  padding-bottom: 4mm;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.header-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7c3aed 0%, #d946ef 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.header-logo svg {
+  color: white !important;
+}
+
+.header-text-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+
+.header-title .badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  color: #7c3aed;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1;
+}
+
+.header-subtitle {
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.2;
+}
