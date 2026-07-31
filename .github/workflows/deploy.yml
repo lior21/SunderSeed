@@ -43,6 +43,17 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           APP_VERSION: ${{ steps.tag_version.outputs.new_version }}
 
+      - name: Verify Secrets Availability
+        run: |
+          HAS_TOKEN=0
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then echo "✓ CLOUDFLARE_API_TOKEN is available"; HAS_TOKEN=1; fi
+          if [ -n "${{ secrets.CF_API_TOKEN }}" ]; then echo "✓ CF_API_TOKEN is available"; HAS_TOKEN=1; fi
+          if [ $HAS_TOKEN -eq 0 ]; then
+            echo "::error::Neither CLOUDFLARE_API_TOKEN nor CF_API_TOKEN is accessible by this GitHub Action job."
+            echo "If your secrets were created inside an Environment (like 'github-pages'), move them to 'Repository secrets' or specify the environment in the job."
+            exit 1
+          fi
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
