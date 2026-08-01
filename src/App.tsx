@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Sparkles, RefreshCw, Cpu, CheckCircle, Download } from 'lucide-react';
+import { Shield, Sparkles, RefreshCw, Download } from 'lucide-react';
 import Generator from './components/Generator';
 import Recoverer from './components/Recoverer';
 
@@ -76,45 +76,38 @@ function App() {
     <div className="min-h-screen bg-[#070a13] text-slate-100 flex flex-col selection:bg-violet-600/30 selection:text-violet-200">
       {/* Header */}
       <header className="border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-50 print-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0">
               <Shield className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-200 via-fuchsia-100 to-slate-200 bg-clip-text text-transparent">
-                WordCrux <span className="text-sm font-semibold px-2 py-0.5 bg-violet-600/20 border border-violet-500/30 rounded text-violet-300 ml-1.5 font-mono">SLIP39</span>
+              <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-200 via-fuchsia-100 to-slate-200 bg-clip-text text-transparent flex items-center gap-2">
+                WordCrux <span className="text-xs font-semibold px-2 py-0.5 bg-violet-600/20 border border-violet-500/30 rounded text-violet-300 font-mono">SLIP39</span>
               </h1>
-              <p className="text-xs text-slate-400 font-medium">Shamir's Secret Sharing for Mnemonic Seeds</p>
+              <p className="text-xs text-slate-400 font-medium hidden sm:block">Shamir's Secret Sharing for Mnemonic Seeds</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <CheckCircle className="h-3 w-3" />
-              100% Client-Side
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <Cpu className="h-3 w-3" />
-              Secrets Stay Local
-            </span>
+          <div className="flex items-center gap-2.5">
             <a
               href={GITHUB_REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
               title="View source code on GitHub (lior21/wordcrux-slip39)"
               aria-label="GitHub Repository"
-              className="p-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
+              className="h-9 w-9 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-violet-500/40 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm hover:shadow-violet-500/10"
             >
-              <GithubIcon className="h-4 w-4" />
+              <GithubIcon className="h-5 w-5" />
             </a>
             <button
               onClick={downloadOfflineApp}
-              title="Save standalone HTML for offline use (Ctrl+S)"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 transition-colors cursor-pointer"
+              title="Download single-file HTML for air-gapped use (Ctrl+S / ⌘S)"
+              className="hidden sm:inline-flex h-9 items-center gap-1.5 px-3.5 rounded-full text-xs font-semibold bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 transition-colors cursor-pointer"
             >
-              <Download className="h-3 w-3" />
-              Save Offline App {versionString}
+              <Download className="h-3.5 w-3.5" />
+              <span>Download Standalone Tool</span>
+              {versionString && <span className="text-violet-400/70 font-mono hidden md:inline">{versionString}</span>}
             </button>
           </div>
         </div>
@@ -213,8 +206,15 @@ function App() {
             </a>
           </div>
           <p>© 2026 WordCrux SLIP-39. Built using standard audited packages for local client-side execution.</p>
-          <p className="text-slate-600">
-            For maximum security, press <kbd className="px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">Ctrl+S</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">⌘S</kbd> to save this standalone app for air-gapped use.
+
+          {/* Desktop Security Tip */}
+          <p className="hidden sm:block text-slate-600">
+            For maximum security, run this standalone tool on an air-gapped computer (press <kbd className="px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">Ctrl+S</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">⌘S</kbd> to save).
+          </p>
+
+          {/* Mobile Security Tip */}
+          <p className="sm:hidden text-slate-600">
+            For maximum security, run this standalone tool on an air-gapped computer.
           </p>
         </div>
       </footer>
