@@ -12,6 +12,7 @@ import {
   Printer,
 } from "lucide-react";
 import MnemonicInput from "./MnemonicInput";
+import { GithubIcon } from "./GithubIcon";
 import {
   BIP39_WORD_LIST,
   generateBip39Mnemonic,
@@ -601,6 +602,10 @@ export default function Generator() {
               pages.push(shares.slice(i, i + cardsPerPage));
             }
 
+            const now = new Date();
+            const timestampStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            const versionString = typeof __APP_VERSION__ !== 'undefined' && __APP_VERSION__ ? __APP_VERSION__ : undefined;
+
             return pages.map((pageShares, pageIdx) => (
               <div key={pageIdx} className="print-page">
                 {/* Print Header */}
@@ -655,6 +660,32 @@ export default function Generator() {
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Print Footer */}
+                <div className="print-footer font-sans">
+                  <div className="print-footer-row">
+                    <div className="print-footer-repo">
+                      <GithubIcon className="h-3.5 w-3.5 text-slate-700" />
+                      <span className="font-mono text-slate-700 font-semibold text-[11px]">lior21/wordcrux-slip39</span>
+                      {versionString && (
+                        <>
+                          <span className="text-slate-400 font-mono text-[10px] select-none">•</span>
+                          <span className="print-footer-badge font-mono">
+                            v{versionString}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="print-footer-row print-footer-subrow">
+                    <span className="print-footer-timestamp font-mono">
+                      Generated: {timestampStr}
+                    </span>
+                    <span className="print-footer-page font-mono">
+                      Page {pageIdx + 1} of {pages.length}
+                    </span>
+                  </div>
                 </div>
               </div>
             ));

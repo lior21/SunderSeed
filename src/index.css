@@ -115,6 +115,10 @@ html.light ::-webkit-scrollbar-thumb:hover {
     page-break-inside: avoid !important;
     height: 297mm !important;
     width: 210mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
   }
 
   .print-page:last-child {
@@ -269,4 +273,52 @@ html.light ::-webkit-scrollbar-thumb:hover {
   font-weight: 500;
   color: #64748b;
   line-height: 1.2;
+}
+
+/* Print Footer Styles */
+.print-footer {
+  margin-top: auto;
+  padding-top: 3mm;
+  border-top: 1px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.print-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.print-footer-subrow {
+  margin-top: 1px;
+}
+
+.print-footer-repo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.print-footer-badge {
+  font-size: 8.5px;
+  font-weight: 600;
+  padding: 1px 5px;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: #7c3aed;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+.print-footer-timestamp {
+  font-size: 9px;
+  color: #64748b;
+}
+
+.print-footer-page {
+  font-size: 9px;
+  font-weight: 600;
+  color: #475569;
 }
