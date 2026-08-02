@@ -157,7 +157,7 @@ export default function MnemonicInput({
 
           return (
             <div key={idx} className={`relative flex flex-col ${isInputActive ? 'z-30' : 'z-10'}`}>
-              <label className="text-xs text-slate-500 mb-2 font-medium select-none">
+              <label className="text-xs text-slate-600 dark:text-slate-500 mb-2 font-medium select-none">
                 {labelPrefix} {idx + 1}
               </label>
               <div className="relative flex items-center">
@@ -165,7 +165,7 @@ export default function MnemonicInput({
                 {isInputActive && suggestionSuffix && (
                   <div className="absolute left-0 top-0 bottom-0 flex items-center pl-1.5 pointer-events-none select-none font-mono text-sm leading-none">
                     <span className="opacity-0">{word}</span>
-                    <span className="text-slate-500">{suggestionSuffix}</span>
+                    <span className="text-slate-400 dark:text-slate-500">{suggestionSuffix}</span>
                   </div>
                 )}
                 <input
@@ -185,12 +185,12 @@ export default function MnemonicInput({
                       setActiveIdx(current => current === idx ? null : current);
                     }, 150);
                   }}
-                  className={`w-full pl-1.5 pr-6 py-2 bg-transparent border-x-0 border-t-0 border-b font-mono text-sm leading-none text-slate-100 focus:outline-none transition-all duration-200 ${
+                  className={`w-full pl-1.5 pr-6 py-2 bg-transparent border-x-0 border-t-0 border-b font-mono text-sm leading-none text-slate-900 dark:text-slate-100 focus:outline-none transition-all duration-200 ${
                     isNotEmpty
                       ? isValid
                         ? 'border-b-emerald-500/50 focus:border-b-emerald-400'
                         : 'border-b-rose-500/50 focus:border-b-rose-400'
-                      : 'border-b-slate-700 focus:border-b-violet-500'
+                      : 'border-b-slate-300 dark:border-b-slate-700 focus:border-b-violet-500'
                   }`}
                   placeholder="---"
                   autoComplete="off"
@@ -205,7 +205,7 @@ export default function MnemonicInput({
 
               {/* Suggestions Dropdown */}
               {activeIdx === idx && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-[100%] mt-1.5 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden font-mono text-xs">
+                <div className="absolute left-0 right-0 top-[100%] mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden font-mono text-xs">
                   {suggestions.map((sug, sIdx) => (
                     <button
                       key={sug}
@@ -214,7 +214,7 @@ export default function MnemonicInput({
                       className={`w-full text-left px-3 py-2 transition-colors ${
                         sIdx === suggestionIdx
                           ? 'bg-violet-600 text-white font-semibold'
-                          : 'text-slate-300 hover:bg-slate-700'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
                       {sug}
@@ -227,8 +227,8 @@ export default function MnemonicInput({
         })}
       </div>
       {areAllWordsValid && !isPhraseValid && (
-        <div className="mt-5 p-3.5 bg-rose-500/10 border border-rose-500/25 text-rose-300 rounded-xl text-xs flex items-center gap-2.5 animate-fade-in">
-          <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+        <div className="mt-5 p-3.5 bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-300 rounded-xl text-xs flex items-center gap-2.5 animate-fade-in">
+          <AlertCircle className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
           <span>Checksum Verification Failed: The combination or order of these words is invalid.</span>
         </div>
       )}
