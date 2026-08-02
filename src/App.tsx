@@ -69,7 +69,7 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const versionString = typeof __APP_VERSION__ !== 'undefined' ? `v${__APP_VERSION__}` : '';
+  const versionString = typeof __APP_VERSION__ !== 'undefined' && __APP_VERSION__ ? `v${__APP_VERSION__}` : undefined;
 
 
   return (
@@ -204,6 +204,14 @@ function App() {
             >
               Report Issue
             </a>
+            {versionString && (
+              <>
+                <span className="text-slate-700">•</span>
+                <span className="font-mono text-violet-300/80 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20 text-[11px]">
+                  {versionString}
+                </span>
+              </>
+            )}
           </div>
           <p>© 2026 WordCrux SLIP-39. Built using standard audited packages for local client-side execution.</p>
 
