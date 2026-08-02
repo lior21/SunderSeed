@@ -109,7 +109,7 @@ function App() {
             </div>
             <div>
               <div className="flex items-baseline gap-2">
-                <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 via-fuchsia-600 to-slate-800 dark:from-violet-200 dark:via-fuchsia-100 dark:to-slate-200 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-800 via-purple-700 to-violet-600 dark:from-violet-200 dark:via-fuchsia-100 dark:to-slate-200 bg-clip-text text-transparent">
                   WordCrux
                 </h1>
                 <span className="relative -top-[2px] text-[10px] font-semibold px-1.5 py-[1px] bg-violet-500/10 dark:bg-violet-600/20 border border-violet-500/30 rounded text-violet-700 dark:text-violet-300 font-mono">
