@@ -1,37 +1,91 @@
-# React + TypeScript + Vite
+# WordCrux SLIP-39
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> **Secure, client-side Shamir's Secret Sharing (SLIP-0039) tool for BIP-39 wallet seed phrases.**
 
-Currently, two official plugins are available:
+WordCrux SLIP-39 is a browser-based, offline-capable cryptographic tool designed to split a standard **12-word BIP-39 mnemonic seed phrase** into multiple **20-word SLIP-39 shares** using Shamir's Secret Sharing scheme, and to recover the original seed phrase when a required threshold of shares is provided.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🌟 Key Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **🔐 BIP-39 ➔ SLIP-39 Share Generation**: Split 12-word recovery seeds into custom $N$-of-$M$ SLIP-39 shares.
+- **🛡️ Simple & Advanced Multi-Group Schemes**:
+  - **Simple Mode**: Single threshold group (e.g. any 2-of-3 shares).
+  - **Advanced Multi-Group Mode**: Complex multi-group threshold structures (e.g. require shares from $K$-of-$L$ distinct groups).
+- **🔄 SLIP-39 ➔ BIP-39 Recovery**: Reconstruct original master seeds with real-time metadata analysis (Group ID, Share Indices, Threshold progress).
+- **🪄 Auto-Fix Single-Word Typos**: Automatically detects and offers interactive single-word error correction for damaged or mistyped shares using SLIP-39's 1024-word list & Reed-Solomon checksum distance.
+- **🖨️ Printable A4 Share Cards**: Built-in, clean print templates for physical paper backups with grid alignment, metadata tags, versioning, and timestamps.
+- **💻 100% Client-Side & Air-Gapped**: Zero network requests, no external tracking, no backend dependencies.
+- **📄 Single-File Offline Executable**: Export the entire application as a single self-contained `.html` file (`Ctrl+S` or header download) to run safely on air-gapped, offline hardware.
+- **🌓 Dark & Light Mode**: Modern, accessible UI built with React 19, TypeScript, and Tailwind CSS v4.
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## 🔒 Security & Air-Gap Best Practices
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+For maximum security when handling cryptocurrency wallet seed phrases:
+
+1. **Use an Air-Gapped Machine**: Download the standalone `.html` bundle (or build locally using `npm run build`), transfer it via a clean USB drive to a computer disconnected from the internet (Wi-Fi off, Bluetooth disabled), and run it locally in your browser.
+2. **Physical Storage**: Print your SLIP-39 share cards or write them down manually on physical medium (waterproof paper, metal plates). Store shares in physically distinct, secure locations.
+3. **Clipboard Caution**: Avoid using digital clipboards on connected operating systems with active clipboard managers.
+
+---
+
+## 🚀 Getting Started
+
+### Local Development
+
+Ensure you have [Node.js](https://nodejs.org/) (v18+) installed.
+
+```bash
+# Clone the repository
+git clone https://github.com/lior21/wordcrux-slip39.git
+cd wordcrux-slip39
+
+# Install dependencies
+npm install
+
+# Start local development server
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Building Single-File Standalone HTML
 
-## License
+To build the self-contained single-file offline application:
 
-This project is licensed under the [PolyForm Strict License 1.0.0](LICENSE).
+```bash
+npm run build
+```
+
+The compiled standalone tool will be output to `dist/index.html`. You can open this file directly in any modern web browser without internet connection.
+
+### Code Quality & Linting
+
+```bash
+npm run lint
+```
+
+---
+
+## 🛠️ Technology Stack
+
+- **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool**: [Vite](https://vite.dev/) with [`vite-plugin-singlefile`](https://github.com/richard-rogers/vite-plugin-singlefile)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Cryptographic Libraries**:
+  - [`@scure/bip39`](https://github.com/paulmillr/scure-bip39) by Paul Miller (noble/scure) for BIP-39 mnemonic verification & entropy conversion.
+  - [`slip39`](https://github.com/satoshilabs/slips/blob/master/slip-0039.md) for SatoshiLabs SLIP-0039 Shamir's Secret Sharing implementation.
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+---
+
+## 📄 License
+
+This project is licensed under the [PolyForm Strict License 1.0.0](LICENSE). Non-commercial use and personal security use are permitted under the terms of the license.
+
+---
+
+## ⚠️ Disclaimer
+
+This tool is provided "as is", without warranty of any kind. Always test your recovery workflow with non-critical phrases before trusting high-value wallet seeds to any backup scheme.
 
