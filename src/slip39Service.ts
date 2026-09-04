@@ -95,6 +95,7 @@ export function slip39ToBip39(shares: string[], passphrase = ''): string {
  */
 export interface ShareMetadata {
   identifier: number;
+  iterationExponent: number;
   groupIndex: number;
   groupThreshold: number;
   groupCount: number;
@@ -117,6 +118,7 @@ export function decodeShareMetadata(share: string): ShareMetadata | null {
     // Reconstruct fields from the first 4 words of the share
     const idExpInt = BigInt(indices[0]) * 1024n + BigInt(indices[1]);
     const identifier = Number(idExpInt >> 5n);
+    const iterationExponent = Number(idExpInt & 31n);
 
     const tmp = BigInt(indices[2]) * 1024n + BigInt(indices[3]);
     const groupIndex = Number((tmp >> 16n) & 15n);
@@ -127,6 +129,7 @@ export function decodeShareMetadata(share: string): ShareMetadata | null {
 
     return {
       identifier,
+      iterationExponent,
       groupIndex,
       groupThreshold,
       groupCount,

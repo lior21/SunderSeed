@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   ShieldAlert,
   Plus,
@@ -11,6 +11,8 @@ import {
   Clipboard,
   AlertCircle,
   Wand2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import MnemonicInput from "./MnemonicInput";
 import {
@@ -22,12 +24,39 @@ import {
 } from "../slip39Service";
 import type { ShareMetadata } from "../slip39Service";
 
-
 interface ShareInput {
   id: string;
   words: string[];
   metadata: ShareMetadata | null;
   isValid: boolean;
+}
+
+export type ShareValidationStatus =
+  | { type: "valid" }
+  | { type: "conflict_identifier"; expectedId: number; actualId: number }
+  | { type: "conflict_iteration"; expectedExp: number; actualExp: number }
+  | { type: "conflict_group_count"; expectedCount: number; actualCount: number }
+  | { type: "conflict_group_threshold"; expectedThreshold: number; actualThreshold: number }
+  | { type: "duplicate"; originalCardIdx: number }
+  | { type: "incomplete" };
+
+interface AnalyzedShare {
+  cardIdx: number;
+  input: ShareInput;
+  status: ShareValidationStatus;
+}
+
+interface GroupShareItem {
+  cardIdx: number;
+  memberIndex: number;
+  phrase: string;
+}
+
+interface GroupAnalysis {
+  groupIndex: number;
+  threshold: number;
+  enteredCount: number;
+  shares: GroupShareItem[];
 }
 
 export default function Recoverer() {
@@ -36,33 +65,53 @@ export default function Recoverer() {
   ]);
   const [passphrase, setPassphrase] = useState("");
   const [showPassphrase, setShowPassphrase] = useState(false);
+  const [isDockCollapsed, setIsDockCollapsed] = useState(false);
+  const [isStuck, setIsStuck] = useState(false);
+  const dockRef = useRef<HTMLDivElement>(null);
 
   // Recovery output
-  const [recoveredMnemonic, setRecoveredMnemonic] = useState<string | null>(
-    null,
-  );
+  const [recoveredMnemonic, setRecoveredMnemonic] = useState<string | null>(null);
   const [showMnemonic, setShowMnemonic] = useState(false);
   const [copiedMnemonic, setCopiedMnemonic] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Group analysis state
-  const [identifier, setIdentifier] = useState<number | null>(null);
-  const [mismatchedIdentifiers, setMismatchedIdentifiers] = useState(false);
-  const [groupStatus, setGroupStatus] = useState<
+  // Track auto-corrected shares
+  const [correctedShares, setCorrectedShares] = useState<
     Record<
-      number,
+      string,
       {
-        count: number;
-        threshold: number;
-        totalAvailable: number;
-        enteredCount: number;
-        shares: string[];
+        original: string[];
+        corrected: string[];
+        diffIndex: number;
       }
     >
   >({});
-  const [metGroupsThreshold, setMetGroupsThreshold] = useState(false);
-  const [neededGroupsCount, setNeededGroupsCount] = useState<number>(0);
-  const [enteredGroupsCount, setEnteredGroupsCount] = useState<number>(0);
+
+  // Detect when the dock is actually sticking to the viewport bottom
+  useEffect(() => {
+    const handleCheck = () => {
+      if (!dockRef.current) return;
+      const rect = dockRef.current.getBoundingClientRect();
+      const stuck = Math.abs(rect.bottom - window.innerHeight) <= 3;
+      setIsStuck(stuck);
+    };
+
+    handleCheck();
+    window.addEventListener("scroll", handleCheck, { passive: true });
+    window.addEventListener("resize", handleCheck, { passive: true });
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && dockRef.current) {
+      ro = new ResizeObserver(handleCheck);
+      ro.observe(dockRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleCheck);
+      window.removeEventListener("resize", handleCheck);
+      ro?.disconnect();
+    };
+  }, [isDockCollapsed, shareInputs.length]);
 
   // Update share inputs list
   const addShareInput = () => {
@@ -78,20 +127,27 @@ export default function Recoverer() {
   };
 
   const removeShareInput = (id: string) => {
-    if (shareInputs.length <= 1) return;
-    setShareInputs((prev) => prev.filter((item) => item.id !== id));
-  };
+    setCorrectedShares((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
 
-  const [correctedShares, setCorrectedShares] = useState<
-    Record<
-      string,
-      {
-        original: string[];
-        corrected: string[];
-        diffIndex: number;
+    setShareInputs((prev) => {
+      if (prev.length <= 1) {
+        return [
+          {
+            id: Date.now().toString(),
+            words: Array(20).fill(""),
+            metadata: null,
+            isValid: false,
+          },
+        ];
       }
-    >
-  >({});
+      return prev.filter((item) => item.id !== id);
+    });
+  };
 
   const updateShareWords = (id: string, words: string[]) => {
     setShareInputs((prev) =>
@@ -99,7 +155,8 @@ export default function Recoverer() {
         if (item.id !== id) return item;
         const phrase = words.join(" ");
         const meta = decodeShareMetadata(phrase);
-        const isValid = meta !== null;
+        const isChecksumValid = validateSlip39Mnemonic(phrase);
+        const isValid = meta !== null && isChecksumValid;
         return {
           ...item,
           words,
@@ -124,8 +181,7 @@ export default function Recoverer() {
 
   const handleAutoFix = (id: string, originalWords: string[], correctedWords: string[]) => {
     const diffIndex = originalWords.findIndex((w, idx) => w !== correctedWords[idx]);
-    
-    // 1. Add to correctedShares
+
     setCorrectedShares((prev) => ({
       ...prev,
       [id]: {
@@ -135,99 +191,230 @@ export default function Recoverer() {
       },
     }));
 
-    // 2. Update the words
     updateShareWords(id, correctedWords);
   };
 
-  // Analyze shares to check validation & threshold completion
-  useEffect(() => {
-    const validShares = shareInputs.filter(
-      (item) => item.isValid && item.metadata,
-    );
+  // --- Schema Locking & Structural Analysis Engine ---
+  const {
+    sessionMeta,
+    analyzedShares,
+    validShares,
+    conflictingShares,
+    duplicateShares,
+    isSingleGroup,
+    groups,
+    singleGroupThreshold,
+    singleGroupEnteredCount,
+    neededGroupsCount,
+    enteredGroupsCount,
+    metGroupsThreshold,
+    hasInvalidEnteredShares,
+    hasConflicts,
+    hasDuplicates,
+    isReadyForRecovery,
+  } = useMemo(() => {
+    // 1. First valid share locks the Session Schema
+    const firstValid = shareInputs.find((s) => s.isValid && s.metadata);
+    const session = firstValid?.metadata ?? null;
 
-    // Check backup identifiers matching
-    if (validShares.length > 0) {
-      const ids = validShares.map((s) => s.metadata!.identifier);
-      const firstId = ids[0];
-      const mismatch = ids.some((id) => id !== firstId);
-      setIdentifier(firstId);
-      setMismatchedIdentifiers(mismatch);
-    } else {
-      setIdentifier(null);
-      setMismatchedIdentifiers(false);
-    }
+    // 2. Classify each share input
+    const analyzed: AnalyzedShare[] = [];
+    const seenShareKeys = new Map<string, number>(); // "groupIndex-memberIndex" -> cardIdx
 
-    // Analyze groups
-    const analysis: Record<
-      number,
-      {
-        count: number;
-        threshold: number;
-        totalAvailable: number;
-        enteredCount: number;
-        shares: string[];
+    shareInputs.forEach((input, cardIdx) => {
+      if (!input.isValid || !input.metadata) {
+        analyzed.push({ cardIdx, input, status: { type: "incomplete" } });
+        return;
       }
-    > = {};
 
-    validShares.forEach((s) => {
-      const meta = s.metadata!;
-      const gIdx = meta.groupIndex;
-      if (!analysis[gIdx]) {
-        analysis[gIdx] = {
-          count: meta.memberThreshold,
-          threshold: meta.memberThreshold,
-          totalAvailable: 0,
+      const meta = input.metadata;
+
+      if (!session) {
+        analyzed.push({ cardIdx, input, status: { type: "incomplete" } });
+        return;
+      }
+
+      // Check conflict against the locked session schema
+      if (meta.identifier !== session.identifier) {
+        analyzed.push({
+          cardIdx,
+          input,
+          status: {
+            type: "conflict_identifier",
+            expectedId: session.identifier,
+            actualId: meta.identifier,
+          },
+        });
+        return;
+      }
+
+      if (meta.iterationExponent !== session.iterationExponent) {
+        analyzed.push({
+          cardIdx,
+          input,
+          status: {
+            type: "conflict_iteration",
+            expectedExp: session.iterationExponent,
+            actualExp: meta.iterationExponent,
+          },
+        });
+        return;
+      }
+
+      if (meta.groupCount !== session.groupCount) {
+        analyzed.push({
+          cardIdx,
+          input,
+          status: {
+            type: "conflict_group_count",
+            expectedCount: session.groupCount,
+            actualCount: meta.groupCount,
+          },
+        });
+        return;
+      }
+
+      if (meta.groupThreshold !== session.groupThreshold) {
+        analyzed.push({
+          cardIdx,
+          input,
+          status: {
+            type: "conflict_group_threshold",
+            expectedThreshold: session.groupThreshold,
+            actualThreshold: meta.groupThreshold,
+          },
+        });
+        return;
+      }
+
+      // Check duplicate share
+      const shareKey = `${meta.groupIndex}-${meta.memberIndex}`;
+      if (seenShareKeys.has(shareKey)) {
+        const originalCardIdx = seenShareKeys.get(shareKey)!;
+        analyzed.push({
+          cardIdx,
+          input,
+          status: {
+            type: "duplicate",
+            originalCardIdx,
+          },
+        });
+        return;
+      }
+
+      // Valid contributing share
+      seenShareKeys.set(shareKey, cardIdx);
+      analyzed.push({ cardIdx, input, status: { type: "valid" } });
+    });
+
+    const valids = analyzed.filter((s) => s.status.type === "valid");
+    const conflicts = analyzed.filter((s) => s.status.type.startsWith("conflict"));
+    const duplicates = analyzed.filter((s) => s.status.type === "duplicate");
+
+    const singleGroup = session !== null && session.groupCount === 1;
+
+    // 3. Build group analysis exclusively from valid shares
+    const groupMap: Record<number, GroupAnalysis> = {};
+
+    if (session) {
+      if (singleGroup) {
+        groupMap[0] = {
+          groupIndex: 0,
+          threshold: session.memberThreshold,
           enteredCount: 0,
           shares: [],
         };
       }
-      const sharePhrase = s.words.join(" ");
-      // Avoid duplicate shares in the same slot
-      if (!analysis[gIdx].shares.includes(sharePhrase)) {
-        analysis[gIdx].shares.push(sharePhrase);
-        analysis[gIdx].enteredCount++;
-      }
-    });
 
-    setGroupStatus(analysis);
+      valids.forEach(({ cardIdx, input }) => {
+        const meta = input.metadata!;
+        const gIdx = meta.groupIndex;
+        if (!groupMap[gIdx]) {
+          groupMap[gIdx] = {
+            groupIndex: gIdx,
+            threshold: meta.memberThreshold,
+            enteredCount: 0,
+            shares: [],
+          };
+        }
+        groupMap[gIdx].shares.push({
+          cardIdx,
+          memberIndex: meta.memberIndex,
+          phrase: input.words.join(" "),
+        });
+        groupMap[gIdx].enteredCount++;
+      });
 
-    // Calculate group completion
-    if (validShares.length > 0) {
-      const meta = validShares[0].metadata!;
-      const groupThresh = meta.groupThreshold; // e.g. 1 (needed groups)
-      setNeededGroupsCount(groupThresh);
-
-      // A group is complete if enteredCount >= threshold
-      const completedGroups = Object.values(analysis).filter(
-        (g) => g.enteredCount >= g.threshold,
-      );
-      setEnteredGroupsCount(completedGroups.length);
-      setMetGroupsThreshold(completedGroups.length >= groupThresh);
-    } else {
-      setNeededGroupsCount(0);
-      setEnteredGroupsCount(0);
-      setMetGroupsThreshold(false);
+      // Sort shares by memberIndex for scannable ordering
+      Object.values(groupMap).forEach((g) => {
+        g.shares.sort((a, b) => a.memberIndex - b.memberIndex);
+      });
     }
+
+    const neededGroups = session?.groupThreshold ?? 0;
+    const completedGroups = Object.values(groupMap).filter(
+      (g) => g.enteredCount >= g.threshold,
+    );
+    const enteredGroups = completedGroups.length;
+    const metGroups = session !== null && enteredGroups >= neededGroups;
+
+    const singleThreshold = singleGroup ? (session?.memberThreshold ?? 0) : 0;
+    const singleEntered = singleGroup ? (groupMap[0]?.enteredCount ?? 0) : 0;
+
+    const invalidEntered = shareInputs.some(
+      (s) => s.words.some((w) => w.trim() !== "") && !s.isValid,
+    );
+
+    const ready =
+      session !== null &&
+      metGroups &&
+      conflicts.length === 0 &&
+      duplicates.length === 0 &&
+      !invalidEntered;
+
+    return {
+      sessionMeta: session,
+      analyzedShares: analyzed,
+      validShares: valids,
+      conflictingShares: conflicts,
+      duplicateShares: duplicates,
+      isSingleGroup: singleGroup,
+      groups: groupMap,
+      singleGroupThreshold: singleThreshold,
+      singleGroupEnteredCount: singleEntered,
+      neededGroupsCount: neededGroups,
+      enteredGroupsCount: enteredGroups,
+      metGroupsThreshold: metGroups,
+      hasInvalidEnteredShares: invalidEntered,
+      hasConflicts: conflicts.length > 0,
+      hasDuplicates: duplicates.length > 0,
+      isReadyForRecovery: ready,
+    };
   }, [shareInputs]);
 
   const handleRecover = () => {
+    if (!isReadyForRecovery) return;
     setError(null);
     setRecoveredMnemonic(null);
     setShowMnemonic(false);
 
-    if (mismatchedIdentifiers) {
-      setError(
-        "You entered shares from different backups. Check the Backup Identifier tags.",
-      );
+    if (hasConflicts) {
+      setError("Please resolve or remove conflicting shares before recovering.");
+      setIsDockCollapsed(false);
       return;
     }
 
-    const validSharesList = shareInputs
-      .filter((item) => item.isValid)
-      .map((item) => item.words.join(" "));
+    if (hasDuplicates) {
+      setError("Please remove duplicate shares before recovering.");
+      setIsDockCollapsed(false);
+      return;
+    }
+
+    const validSharesList = validShares.map((s) => s.input.words.join(" "));
 
     if (validSharesList.length === 0) {
       setError("Please fill in at least one valid 20-word SLIP-39 share.");
+      setIsDockCollapsed(false);
       return;
     }
 
@@ -235,11 +422,13 @@ export default function Recoverer() {
       const recovered = slip39ToBip39(validSharesList, passphrase);
       setRecoveredMnemonic(recovered);
       setShowMnemonic(true);
+      setIsDockCollapsed(false);
     } catch (err: any) {
       setError(
         err.message ||
           "Recovery failed. Verify that you have enough shares and the correct passphrase.",
       );
+      setIsDockCollapsed(false);
     }
   };
 
@@ -252,124 +441,78 @@ export default function Recoverer() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Group Analysis Panel */}
-      {shareInputs.some((s) => s.isValid) && (
-        <div className="bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 backdrop-blur-xl shadow-sm dark:shadow-none transition-colors duration-200">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-            <Info className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-            Backup Metadata Summary
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Backup ID Card */}
-            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-900">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">
-                Backup Identifier
-              </span>
-              {mismatchedIdentifiers ? (
-                <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-medium text-sm">
-                  <ShieldAlert className="h-4 w-4 shrink-0" />
-                  Mismatched Backups!
-                </div>
-              ) : (
-                <span className="font-mono text-lg text-violet-700 dark:text-violet-300 font-semibold">
-                  ID: {identifier !== null ? `#${identifier}` : "---"}
-                </span>
-              )}
-            </div>
-
-            {/* Threshold Progress */}
-            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-900">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">
-                Groups Threshold Progress
-              </span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-lg font-mono font-semibold ${metGroupsThreshold ? "text-emerald-600 dark:text-emerald-400" : "text-slate-800 dark:text-slate-300"}`}
-                >
-                  {enteredGroupsCount} / {neededGroupsCount}
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">groups completed</span>
-              </div>
-            </div>
-
-            {/* Overall status */}
-            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-900 flex items-center">
-              {metGroupsThreshold && !mismatchedIdentifiers ? (
-                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-                  <Check className="h-5 w-5 animate-pulse" />
-                  Ready for Recovery!
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs">
-                  <AlertCircle className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                  Need more shares to meet thresholds.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Group details list */}
-          {Object.keys(groupStatus).length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                Active Group Details
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {Object.entries(groupStatus).map(([gIdx, status]) => {
-                  const isGroupComplete =
-                    status.enteredCount >= status.threshold;
-                  return (
-                    <div
-                      key={gIdx}
-                      className={`flex justify-between items-center p-3 rounded-lg border text-xs ${
-                        isGroupComplete
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
-                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
-                      }`}
-                    >
-                      <span className="font-medium">
-                        Group {parseInt(gIdx) + 1} (Threshold:{" "}
-                        {status.threshold}-of-Members)
-                      </span>
-                      <span className="font-mono">
-                        {status.enteredCount} / {status.threshold} shares
-                        entered
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Share inputs container */}
       <div className="space-y-6">
-        {shareInputs.map((input, idx) => (
-          <div
-            key={input.id}
-            className="bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 backdrop-blur-xl relative focus-within:z-20 z-10 shadow-sm dark:shadow-none transition-colors duration-200"
-          >
-            {/* Glow effect on valid share */}
-            {input.isValid && (
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-xl -z-10"></div>
-            )}
+        {shareInputs.map((input, idx) => {
+          const analysis = analyzedShares[idx];
+          const isShareValid = input.isValid && input.metadata !== null;
+          const isConflict = analysis?.status.type.startsWith("conflict");
+          const isDuplicate = analysis?.status.type === "duplicate";
 
-            <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">
-                  SLIP-39 Share #{idx + 1}
-                </span>
-                {input.isValid && input.metadata && (
-                  <span className="text-xs px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-md">
-                    Group {input.metadata.groupIndex + 1} | Share{" "}
-                    {input.metadata.memberIndex + 1}
+          return (
+            <div
+              key={input.id}
+              className={`bg-white/80 dark:bg-slate-900/40 border rounded-2xl p-6 backdrop-blur-xl relative focus-within:z-20 z-10 shadow-sm dark:shadow-none transition-colors duration-200 ${
+                isConflict
+                  ? "border-rose-500/40 dark:border-rose-500/30"
+                  : isDuplicate
+                  ? "border-amber-500/40 dark:border-amber-500/30"
+                  : "border-slate-200 dark:border-slate-800/80"
+              }`}
+            >
+              {/* Contextual Glow */}
+              {isShareValid && analysis?.status.type === "valid" && (
+                <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-xl -z-10 pointer-events-none"></div>
+              )}
+              {isConflict && (
+                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-xl -z-10 pointer-events-none"></div>
+              )}
+
+              <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">
+                    SLIP-39 Share #{idx + 1}
                   </span>
-                )}
-              </div>
-              {shareInputs.length > 1 && (
+
+                  {/* Contextual Share Header Badges */}
+                  {isShareValid && analysis && (() => {
+                    if (analysis.status.type === "conflict_identifier") {
+                      return (
+                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-400 rounded-md font-medium">
+                          <AlertCircle className="h-3 w-3 shrink-0" />
+                          Wrong Backup (ID #{analysis.status.actualId} vs #{analysis.status.expectedId})
+                        </span>
+                      );
+                    }
+
+                    if (analysis.status.type.startsWith("conflict")) {
+                      return (
+                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-400 rounded-md font-medium">
+                          <AlertCircle className="h-3 w-3 shrink-0" />
+                          Configuration Mismatch
+                        </span>
+                      );
+                    }
+
+                    if (analysis.status.type === "duplicate") {
+                      return (
+                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-400 rounded-md font-medium">
+                          <AlertCircle className="h-3 w-3 shrink-0" />
+                          Duplicate of Share #{analysis.status.originalCardIdx + 1}
+                        </span>
+                      );
+                    }
+
+                    // Valid share matching session
+                    return (
+                      <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md font-medium">
+                        {isSingleGroup
+                          ? `Backup #${input.metadata!.identifier} · Share ${input.metadata!.memberIndex + 1}`
+                          : `Backup #${input.metadata!.identifier} · Group ${input.metadata!.groupIndex + 1} · Share ${input.metadata!.memberIndex + 1}`}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <button
                   type="button"
                   onClick={() => removeShareInput(input.id)}
@@ -378,8 +521,7 @@ export default function Recoverer() {
                   <Trash2 className="h-3.5 w-3.5" />
                   Remove
                 </button>
-              )}
-            </div>
+              </div>
 
             <MnemonicInput
               wordCount={20}
@@ -467,129 +609,419 @@ export default function Recoverer() {
               );
             })()}
           </div>
-        ))}
+        );
+      })}
       </div>
 
-      {/* Add Share and Submit Actions */}
-      <div className="flex flex-col items-center justify-center gap-6">
+      {/* Add Share Action */}
+      <div className="flex justify-center pt-2">
         <button
           type="button"
           onClick={addShareInput}
-          className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-violet-700 dark:text-violet-300 font-semibold border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 rounded-xl transition-all duration-200 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-violet-700 dark:text-violet-300 font-semibold border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 rounded-xl transition-all duration-200 cursor-pointer shadow-sm hover:shadow"
         >
           <Plus className="h-4 w-4" />
           Add Share Mnemonic
         </button>
-
-        <div className="w-full max-w-lg bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 backdrop-blur-xl space-y-4 shadow-sm dark:shadow-none">
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-2">
-              <Key className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-              Decryption Passphrase
-            </label>
-            <div className="relative">
-              <input
-                type={showPassphrase ? "text" : "password"}
-                value={passphrase}
-                onChange={(e) => setPassphrase(e.target.value)}
-                className="w-full px-3 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 font-mono text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20"
-                placeholder="Enter passphrase (if used)..."
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassphrase((prev) => !prev)}
-                className="absolute right-3 top-[50%] -translate-y-[50%] text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
-              >
-                {showPassphrase ? "Hide" : "Show"}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 rounded-xl text-xs text-center">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleRecover}
-            className="w-full py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-violet-600/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-          >
-            Reconstruct BIP-39 Seed
-          </button>
-        </div>
       </div>
 
-      {/* Recovered Output Mnemonic */}
-      {recoveredMnemonic && (
-        <div className="bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 backdrop-blur-xl animate-fade-in shadow-sm dark:shadow-none">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-2">
-            <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            Recovered BIP-39 Seed Mnemonic
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-            Your master seed phrase was successfully reconstructed client-side.
-            Keep it safe!
-          </p>
+      {/* Sticky Docked Bottom Panel */}
+      <div className="sticky bottom-0 z-40 print-hidden">
+        <div
+          ref={dockRef}
+          className={`bg-white/95 dark:bg-slate-900/95 p-4 sm:p-5 backdrop-blur-xl ring-1 ring-slate-900/5 dark:ring-white/10 transition-all duration-300 ${
+            isStuck
+              ? "border-t border-x border-b-0 border-slate-200 dark:border-slate-800/90 rounded-t-2xl rounded-b-none shadow-[0_-12px_35px_rgba(0,0,0,0.14)] dark:shadow-[0_-14px_45px_rgba(0,0,0,0.7)]"
+              : "border border-slate-200 dark:border-slate-800/90 rounded-2xl shadow-sm dark:shadow-none"
+          }`}
+        >
+            {/* Header Row: Title, Quick Badges & Minimize/Expand toggle */}
+          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex items-center gap-1.5 font-semibold text-sm sm:text-base text-slate-900 dark:text-slate-100">
+                <Info className="h-4 w-4 sm:h-5 sm:w-5 text-violet-600 dark:text-violet-400 shrink-0" />
+                <span>Backup Metadata & Recovery</span>
+              </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-900 p-5 rounded-xl">
-            <div className="font-mono text-sm leading-relaxed tracking-wider break-words select-all select-none pr-4 w-full">
-              {showMnemonic ? (
-                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-                  {recoveredMnemonic}
-                </span>
+              {/* Status & Metadata Badges */}
+              <div className="flex items-center gap-1.5 text-xs font-mono flex-wrap">
+                {/* 1. Session Backup Identifier */}
+                {sessionMeta ? (
+                  <span className="px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-700 dark:text-violet-300 font-semibold border border-violet-500/20 font-mono">
+                    ID: #{sessionMeta.identifier}
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-sans">
+                    Awaiting shares
+                  </span>
+                )}
+
+                {/* 2. Structural Progress Counter */}
+                {sessionMeta && (
+                  <span
+                    className={`px-2 py-0.5 rounded-md font-sans text-[11px] font-medium border ${
+                      metGroupsThreshold
+                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    {isSingleGroup
+                      ? `${singleGroupEnteredCount} / ${singleGroupThreshold} shares`
+                      : `${enteredGroupsCount} / ${neededGroupsCount} groups`}
+                  </span>
+                )}
+
+                {/* 3. Single Actionable Status Badge */}
+                {recoveredMnemonic ? (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-sans font-medium text-[11px]">
+                    <Check className="h-3 w-3 shrink-0" />
+                    Seed Recovered
+                  </span>
+                ) : isReadyForRecovery ? (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-sans font-semibold text-[11px] animate-pulse">
+                    <Check className="h-3 w-3 shrink-0" />
+                    Ready for Recovery!
+                  </span>
+                ) : hasConflicts ? (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-sans font-medium text-[11px]">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    {conflictingShares.length === 1
+                      ? `Conflict in Share #${conflictingShares[0].cardIdx + 1}`
+                      : `${conflictingShares.length} Conflicting Shares`}
+                  </span>
+                ) : hasDuplicates ? (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-sans font-medium text-[11px]">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    {duplicateShares.length === 1
+                      ? `Duplicate in Share #${duplicateShares[0].cardIdx + 1}`
+                      : `${duplicateShares.length} Duplicate Shares`}
+                  </span>
+                ) : hasInvalidEnteredShares ? (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-sans font-medium text-[11px]">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    Invalid share detected
+                  </span>
+                ) : sessionMeta ? (
+                  isSingleGroup ? (
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-sans font-medium text-[11px]">
+                      <Info className="h-3 w-3 shrink-0 text-violet-500" />
+                      {singleGroupThreshold - singleGroupEnteredCount === 1
+                        ? "Need 1 more share"
+                        : `Need ${singleGroupThreshold - singleGroupEnteredCount} more shares`}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-sans font-medium text-[11px]">
+                      <Info className="h-3 w-3 shrink-0 text-violet-500" />
+                      {neededGroupsCount - enteredGroupsCount === 1
+                        ? "Need 1 more group"
+                        : `Need ${neededGroupsCount - enteredGroupsCount} more groups`}
+                    </span>
+                  )
+                ) : (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-sans font-medium text-[11px]">
+                    <Info className="h-3 w-3 shrink-0" />
+                    Enter shares to begin
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsDockCollapsed((prev) => !prev)}
+              aria-label={isDockCollapsed ? "Expand panel" : "Minimize panel"}
+              className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            >
+              {isDockCollapsed ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  <span className="hidden sm:inline">Expand</span>
+                </>
               ) : (
-                <span className="text-slate-400 dark:text-slate-600 font-semibold select-none">
-                  •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
-                </span>
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  <span className="hidden sm:inline">Minimize</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Expanded Content Area */}
+          {!isDockCollapsed && (
+            <div className="pt-2.5 space-y-2.5 max-h-[70vh] overflow-y-auto pr-0.5 animate-fade-in">
+              {/* Single-Group Shares Presentation */}
+              {sessionMeta && isSingleGroup && (
+                <div
+                  className={`p-3 rounded-xl border text-xs transition-all ${
+                    metGroupsThreshold
+                      ? "bg-emerald-500/5 dark:bg-emerald-950/20 border-emerald-500/30"
+                      : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800/80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="font-semibold text-slate-900 dark:text-slate-200 flex items-center gap-1.5">
+                      <span>Recovery Shares</span>
+                      <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                        ({singleGroupThreshold} required)
+                      </span>
+                    </span>
+                    <span
+                      className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                        metGroupsThreshold
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25"
+                          : "bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      {singleGroupEnteredCount} / {singleGroupThreshold} shares entered
+                    </span>
+                  </div>
+
+                  {/* Share Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    {groups[0]?.shares.map((share) => (
+                      <span
+                        key={share.cardIdx}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md font-medium text-[11px]"
+                      >
+                        Share {share.memberIndex + 1}{" "}
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">
+                          (from Share #{share.cardIdx + 1})
+                        </span>
+                      </span>
+                    ))}
+
+                    {Array.from({
+                      length: Math.max(0, singleGroupThreshold - singleGroupEnteredCount),
+                    }).map((_, i) => (
+                      <span
+                        key={`missing-${i}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 rounded-md text-[11px]"
+                      >
+                        + 1 share needed
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Multi-Group Breakdown */}
+              {sessionMeta && !isSingleGroup && Object.keys(groups).length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {Object.entries(groups).map(([gIdx, status]) => {
+                    const isGroupComplete = status.enteredCount >= status.threshold;
+                    const missingCount = Math.max(0, status.threshold - status.enteredCount);
+
+                    return (
+                      <div
+                        key={gIdx}
+                        className={`p-2.5 rounded-xl border text-xs transition-all ${
+                          isGroupComplete
+                            ? "bg-emerald-500/5 dark:bg-emerald-950/20 border-emerald-500/30"
+                            : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800/80"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <span className="font-semibold text-slate-900 dark:text-slate-200 flex items-center gap-1.5">
+                            <span>Group {parseInt(gIdx) + 1}</span>
+                            <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                              ({status.threshold} shares required)
+                            </span>
+                          </span>
+                          <span
+                            className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                              isGroupComplete
+                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25"
+                                : "bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                            }`}
+                          >
+                            {status.enteredCount} / {status.threshold} shares
+                          </span>
+                        </div>
+
+                        {/* Share Chips */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                          {status.shares.map((share) => (
+                            <span
+                              key={share.cardIdx}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md font-medium text-[11px]"
+                            >
+                              Share {share.memberIndex + 1}{" "}
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">
+                                (from Share #{share.cardIdx + 1})
+                              </span>
+                            </span>
+                          ))}
+
+                          {Array.from({ length: missingCount }).map((_, i) => (
+                            <span
+                              key={`missing-${i}`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 rounded-md text-[10.5px]"
+                            >
+                              + 1 share needed
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Conflicting / Excluded Shares Banner */}
+              {(hasConflicts || hasDuplicates) && (
+                <div className="space-y-1.5">
+                  {conflictingShares.map(({ cardIdx, status }) => (
+                    <div
+                      key={`conflict-${cardIdx}`}
+                      className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 rounded-xl text-xs flex items-center gap-2 animate-fade-in"
+                    >
+                      <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                      <span>
+                        <strong>Share #{cardIdx + 1} excluded:</strong>{" "}
+                        {status.type === "conflict_identifier"
+                          ? `Belongs to Backup ID #${status.actualId} (Session is locked to ID #${status.expectedId}).`
+                          : "Backup configuration does not match the active session."}
+                      </span>
+                    </div>
+                  ))}
+
+                  {duplicateShares.map(({ cardIdx, status }) => (
+                    <div
+                      key={`duplicate-${cardIdx}`}
+                      className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-400 rounded-xl text-xs flex items-center gap-2 animate-fade-in"
+                    >
+                      <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                      <span>
+                        <strong>Share #{cardIdx + 1} excluded:</strong> Duplicate of Share #
+                        {(status as any).originalCardIdx + 1}.
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Error Banner */}
+              {error && (
+                <div className="p-2.5 bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 rounded-xl text-xs text-center animate-fade-in font-medium">
+                  {error}
+                </div>
+              )}
+
+              {/* Action Controls: Passphrase & Submit Button */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-0.5">
+                <div className="relative flex-grow">
+                  <div className="absolute left-3 top-[50%] -translate-y-[50%] pointer-events-none text-slate-400 dark:text-slate-500">
+                    <Key className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <input
+                    type={showPassphrase ? "text" : "password"}
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    className="w-full pl-9 pr-14 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 font-mono text-xs sm:text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 transition-colors"
+                    placeholder="Decryption passphrase (optional)..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassphrase((prev) => !prev)}
+                    className="absolute right-3 top-[50%] -translate-y-[50%] text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer select-none"
+                  >
+                    {showPassphrase ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={!isReadyForRecovery}
+                  onClick={handleRecover}
+                  title={
+                    isReadyForRecovery
+                      ? "Reconstruct BIP-39 Seed"
+                      : "Enter all required valid shares to enable recovery"
+                  }
+                  className={`sm:w-auto px-6 py-2.5 font-semibold rounded-xl text-xs sm:text-sm transition-all duration-200 shrink-0 ${
+                    isReadyForRecovery
+                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-md hover:shadow-violet-600/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                      : "bg-slate-200 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700/60 cursor-not-allowed shadow-none"
+                  }`}
+                >
+                  Reconstruct BIP-39 Seed
+                </button>
+              </div>
+
+              {/* Recovered Secret Mnemonic Display */}
+              {recoveredMnemonic && (
+                <div className="mt-2 bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-3.5 sm:p-4 backdrop-blur-xl animate-fade-in space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                      <Check className="h-4 w-4 shrink-0" />
+                      <span>Recovered BIP-39 Seed Mnemonic</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Reconstructed client-side
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-950 border border-emerald-500/20 p-3 rounded-lg">
+                    <div className="font-mono text-xs sm:text-sm leading-relaxed tracking-wider break-words select-all pr-2 w-full">
+                      {showMnemonic ? (
+                        <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                          {recoveredMnemonic}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 dark:text-slate-600 font-semibold select-none">
+                          •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 shrink-0 self-end sm:self-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowMnemonic((prev) => !prev)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-lg text-xs transition-colors cursor-pointer"
+                      >
+                        {showMnemonic ? (
+                          <>
+                            <EyeOff className="h-3 w-3" />
+                            Hide
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-3 w-3" />
+                            Show
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleCopyMnemonic}
+                        className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg font-medium text-xs transition-all duration-200 cursor-pointer ${
+                          copiedMnemonic
+                            ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                            : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {copiedMnemonic ? (
+                          <>
+                            <Check className="h-3 w-3 animate-bounce" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Clipboard className="h-3 w-3" />
+                            Copy Seed
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-
-            <div className="flex gap-2 shrink-0 self-end lg:self-center">
-              <button
-                type="button"
-                onClick={() => setShowMnemonic((prev) => !prev)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl text-xs transition-colors cursor-pointer"
-              >
-                {showMnemonic ? (
-                  <>
-                    <EyeOff className="h-3.5 w-3.5" />
-                    Hide Mnemonic
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-3.5 w-3.5" />
-                    Show Mnemonic
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCopyMnemonic}
-                className={`flex items-center gap-1.5 px-4 py-2 border rounded-xl font-medium text-xs transition-all duration-200 cursor-pointer ${
-                  copiedMnemonic
-                    ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
-                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                {copiedMnemonic ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 animate-bounce" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Clipboard className="h-3.5 w-3.5" />
-                    Copy Seed
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
