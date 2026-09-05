@@ -13,6 +13,7 @@ import {
   Wand2,
   ChevronDown,
   ChevronUp,
+  ArrowRight,
 } from "lucide-react";
 import MnemonicInput from "./MnemonicInput";
 import {
@@ -57,6 +58,286 @@ interface GroupAnalysis {
   threshold: number;
   enteredCount: number;
   shares: GroupShareItem[];
+}
+
+interface CorrectedShareInfo {
+  original: string[];
+  corrected: string[];
+  diffIndex: number;
+}
+
+interface ShareCardProps {
+  input: ShareInput;
+  idx: number;
+  analysis: AnalyzedShare | undefined;
+  isSingleGroup: boolean;
+  correctedInfo: CorrectedShareInfo | undefined;
+  onUpdateWords: (words: string[]) => void;
+  onRemove: () => void;
+  onAutoFix: (originalWords: string[], correctedWords: string[]) => void;
+  onNext: () => void;
+  autoFocus?: boolean | number;
+}
+
+function ShareCard({
+  input,
+  idx,
+  analysis,
+  isSingleGroup,
+  correctedInfo,
+  onUpdateWords,
+  onRemove,
+  onAutoFix,
+  onNext,
+  autoFocus = false,
+}: ShareCardProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const isShareValid = input.isValid && input.metadata !== null;
+  const isConflict = analysis?.status.type.startsWith("conflict");
+  const isDuplicate = analysis?.status.type === "duplicate";
+  const canCollapse = isShareValid && !isConflict && !isDuplicate;
+  const effectiveCollapsed = isCollapsed && canCollapse;
+
+  const handleNext = () => {
+    if (canCollapse) {
+      setIsCollapsed(true);
+    }
+    onNext();
+  };
+
+  return (
+    <div
+      className={`bg-white/80 dark:bg-slate-900/40 border rounded-2xl backdrop-blur-xl relative focus-within:z-20 z-10 shadow-sm dark:shadow-none transition-all duration-200 ${
+        effectiveCollapsed ? "p-4 sm:p-5" : "p-6"
+      } ${
+        isConflict
+          ? "border-rose-500/40 dark:border-rose-500/30"
+          : isDuplicate
+          ? "border-amber-500/40 dark:border-amber-500/30"
+          : "border-slate-200 dark:border-slate-800/80"
+      }`}
+    >
+      {/* Contextual Glow */}
+      {isShareValid && analysis?.status.type === "valid" && (
+        <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-xl -z-10 pointer-events-none"></div>
+      )}
+      {isConflict && (
+        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-xl -z-10 pointer-events-none"></div>
+      )}
+
+      {/* Card Header Row */}
+      <div
+        onClick={() => {
+          if (effectiveCollapsed) {
+            setIsCollapsed(false);
+          }
+        }}
+        className={`flex items-center justify-between gap-3 ${
+          effectiveCollapsed
+            ? "cursor-pointer select-none"
+            : "mb-4 border-b border-slate-200 dark:border-slate-800 pb-3"
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-200 shrink-0">
+            SLIP-39 Share #{idx + 1}
+          </span>
+
+          {/* Contextual Share Header Badges */}
+          {isShareValid && analysis && (() => {
+            if (analysis.status.type === "conflict_identifier") {
+              return (
+                <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-400 rounded-md font-medium">
+                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  Wrong Backup (ID #{analysis.status.actualId} vs #{analysis.status.expectedId})
+                </span>
+              );
+            }
+
+            if (analysis.status.type.startsWith("conflict")) {
+              return (
+                <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-400 rounded-md font-medium">
+                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  Configuration Mismatch
+                </span>
+              );
+            }
+
+            if (analysis.status.type === "duplicate") {
+              return (
+                <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-400 rounded-md font-medium">
+                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  Duplicate of Share #{analysis.status.originalCardIdx + 1}
+                </span>
+              );
+            }
+
+            // Valid share matching session
+            return (
+              <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md font-medium font-mono">
+                {isSingleGroup
+                  ? `Backup #${input.metadata!.identifier} · Share ${input.metadata!.memberIndex + 1}`
+                  : `Backup #${input.metadata!.identifier} · Group ${input.metadata!.groupIndex + 1} · Share ${input.metadata!.memberIndex + 1}`}
+              </span>
+            );
+          })()}
+
+          {/* Micro-preview pill when collapsed */}
+          {effectiveCollapsed && isShareValid && input.words.length === 20 && input.words[0] && input.words[19] && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 select-none">
+              <span>{input.words[0]}</span>
+              <span className="text-slate-400 dark:text-slate-500 font-sans font-bold">···</span>
+              <span>{input.words[19]}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Right Action Controls */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            aria-label="Remove share"
+            title="Remove share"
+            className="p-1.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+
+          {canCollapse && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed(!effectiveCollapsed);
+              }}
+              aria-label={effectiveCollapsed ? "Expand share" : "Collapse share"}
+              title={effectiveCollapsed ? "Expand share" : "Collapse share"}
+              className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            >
+              {effectiveCollapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Collapsible Card Body */}
+      <div className={effectiveCollapsed ? "hidden" : "block"}>
+        <MnemonicInput
+          wordCount={20}
+          wordlist={SLIP39_WORD_LIST}
+          words={input.words}
+          onChange={onUpdateWords}
+          labelPrefix="Share Word"
+          onValidatePhrase={validateSlip39Mnemonic}
+          autoFocus={autoFocus}
+        />
+
+        {/* Auto-Fix Section */}
+        {(() => {
+          const isFull = input.words.length === 20 && input.words.every((w) => w.trim() !== "");
+          const areAllWordsValid = isFull && input.words.every((w) => SLIP39_WORD_LIST.includes(w.toLowerCase().trim()));
+          const isChecksumInvalid = areAllWordsValid && !validateSlip39Mnemonic(input.words.join(" "));
+
+          if (!isChecksumInvalid) {
+            if (correctedInfo) {
+              const originalWord = correctedInfo.original[correctedInfo.diffIndex];
+              const correctedWord = correctedInfo.corrected[correctedInfo.diffIndex];
+              return (
+                <div className="mt-4 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-2.5 animate-fade-in text-xs">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
+                    <Check className="h-4 w-4 shrink-0" />
+                    <span>
+                      Word #{correctedInfo.diffIndex + 1} auto-corrected:{" "}
+                      <span className="line-through text-slate-400 dark:text-slate-500">{originalWord}</span>{" "}
+                      ➔ <span className="font-mono bg-emerald-500/10 px-1 py-0.5 rounded text-emerald-800 dark:text-emerald-300 font-semibold">{correctedWord}</span>
+                    </span>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 p-3 rounded-lg flex gap-2">
+                    <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div>
+                      <p className="font-semibold mb-0.5 text-amber-800 dark:text-amber-400">Verification Required</p>
+                      <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
+                        The share has been corrected to satisfy the checksum. Please verify that its{" "}
+                        <strong className="text-amber-900 dark:text-amber-200">
+                          Backup ID ({input.metadata?.identifier !== undefined ? `#${input.metadata.identifier}` : "---"})
+                        </strong>{" "}
+                        and{" "}
+                        <strong className="text-amber-900 dark:text-amber-200">Group/Member index</strong> match your other shares. If they do not match, the correction may have targeted the wrong word due to multiple initial input errors.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          }
+
+          const correctedPhrase = attemptCorrectSlip39Mnemonic(input.words.join(" "));
+          const isFixable = correctedPhrase !== null;
+
+          return (
+            <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in text-xs">
+              <div className="space-y-1">
+                <span className="font-semibold block text-slate-900 dark:text-slate-300">
+                  {isFixable ? "🔧 Correctable Error Detected" : "⚠️ Uncorrectable Error"}
+                </span>
+                <span className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed block max-w-lg">
+                  {isFixable
+                    ? "A single-word substitution error has been found. You can attempt to automatically correct this share."
+                    : "Multiple word errors or an unsupported configuration detected. Auto-correction is not possible for this share."}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                disabled={!isFixable}
+                onClick={() => {
+                  if (correctedPhrase) {
+                    onAutoFix([...input.words], correctedPhrase.split(" "));
+                  }
+                }}
+                className={`flex items-center justify-center gap-1.5 px-4 py-2 font-semibold rounded-lg shrink-0 transition-all duration-200 cursor-pointer ${
+                  isFixable
+                    ? "bg-violet-500/10 hover:bg-violet-600 dark:bg-violet-600/20 text-violet-700 dark:text-violet-300 hover:text-white border border-violet-500/30"
+                    : "bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                }`}
+              >
+                <Wand2 className="h-3.5 w-3.5" />
+                Attempt Auto-Fix
+              </button>
+            </div>
+          );
+        })()}
+
+        {/* Card Footer: Next Share Action */}
+        <div className="flex justify-end pt-3 mt-4 border-t border-slate-200/60 dark:border-slate-800/60">
+          <button
+            type="button"
+            disabled={!canCollapse}
+            onClick={handleNext}
+            title={canCollapse ? "Next share" : "Complete share to continue"}
+            aria-label="Next share"
+            className={`p-3 rounded-xl transition-all duration-200 flex items-center justify-center ${
+              canCollapse
+                ? "bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg shadow-violet-500/20 cursor-pointer"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border border-slate-200 dark:border-slate-700/50 cursor-not-allowed"
+            }`}
+          >
+            <ArrowRight className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Recoverer() {
@@ -113,18 +394,6 @@ export default function Recoverer() {
     };
   }, [isDockCollapsed, shareInputs.length]);
 
-  // Update share inputs list
-  const addShareInput = () => {
-    setShareInputs((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        words: Array(20).fill(""),
-        metadata: null,
-        isValid: false,
-      },
-    ]);
-  };
 
   const removeShareInput = (id: string) => {
     setCorrectedShares((prev) => {
@@ -365,12 +634,7 @@ export default function Recoverer() {
       (s) => s.words.some((w) => w.trim() !== "") && !s.isValid,
     );
 
-    const ready =
-      session !== null &&
-      metGroups &&
-      conflicts.length === 0 &&
-      duplicates.length === 0 &&
-      !invalidEntered;
+    const ready = session !== null && metGroups;
 
     return {
       sessionMeta: session,
@@ -392,23 +656,50 @@ export default function Recoverer() {
     };
   }, [shareInputs]);
 
+  const [focusTarget, setFocusTarget] = useState<{ id: string; timestamp: number } | null>(null);
+
+  // Common helper: focuses the last share if it's already empty, or appends and focuses a new one
+  const addOrFocusEmptyShare = () => {
+    const lastCard = shareInputs[shareInputs.length - 1];
+    const isLastCardEmpty = lastCard && lastCard.words.every((w) => w.trim() === "");
+
+    if (isLastCardEmpty) {
+      setFocusTarget({ id: lastCard.id, timestamp: Date.now() });
+      return;
+    }
+
+    const newId = Date.now().toString();
+    setShareInputs((prev) => [
+      ...prev,
+      {
+        id: newId,
+        words: Array(20).fill(""),
+        metadata: null,
+        isValid: false,
+      },
+    ]);
+    setFocusTarget({ id: newId, timestamp: Date.now() });
+  };
+
+  // 1. Next button on cards: Guided flow (if threshold is met, points to recovery; otherwise advances)
+  const handleCardNext = () => {
+    if (isReadyForRecovery) {
+      dockRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    addOrFocusEmptyShare();
+  };
+
+  // 2. Global "Add Share" button: Explicit user intent (always adds a card, or focuses last empty)
+  const handleManualAddShare = () => {
+    addOrFocusEmptyShare();
+  };
+
   const handleRecover = () => {
     if (!isReadyForRecovery) return;
     setError(null);
     setRecoveredMnemonic(null);
     setShowMnemonic(false);
-
-    if (hasConflicts) {
-      setError("Please resolve or remove conflicting shares before recovering.");
-      setIsDockCollapsed(false);
-      return;
-    }
-
-    if (hasDuplicates) {
-      setError("Please remove duplicate shares before recovering.");
-      setIsDockCollapsed(false);
-      return;
-    }
 
     const validSharesList = validShares.map((s) => s.input.words.join(" "));
 
@@ -443,181 +734,30 @@ export default function Recoverer() {
     <div className="space-y-8 animate-fade-in">
       {/* Share inputs container */}
       <div className="space-y-6">
-        {shareInputs.map((input, idx) => {
-          const analysis = analyzedShares[idx];
-          const isShareValid = input.isValid && input.metadata !== null;
-          const isConflict = analysis?.status.type.startsWith("conflict");
-          const isDuplicate = analysis?.status.type === "duplicate";
-
-          return (
-            <div
-              key={input.id}
-              className={`bg-white/80 dark:bg-slate-900/40 border rounded-2xl p-6 backdrop-blur-xl relative focus-within:z-20 z-10 shadow-sm dark:shadow-none transition-colors duration-200 ${
-                isConflict
-                  ? "border-rose-500/40 dark:border-rose-500/30"
-                  : isDuplicate
-                  ? "border-amber-500/40 dark:border-amber-500/30"
-                  : "border-slate-200 dark:border-slate-800/80"
-              }`}
-            >
-              {/* Contextual Glow */}
-              {isShareValid && analysis?.status.type === "valid" && (
-                <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-xl -z-10 pointer-events-none"></div>
-              )}
-              {isConflict && (
-                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-xl -z-10 pointer-events-none"></div>
-              )}
-
-              <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">
-                    SLIP-39 Share #{idx + 1}
-                  </span>
-
-                  {/* Contextual Share Header Badges */}
-                  {isShareValid && analysis && (() => {
-                    if (analysis.status.type === "conflict_identifier") {
-                      return (
-                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-400 rounded-md font-medium">
-                          <AlertCircle className="h-3 w-3 shrink-0" />
-                          Wrong Backup (ID #{analysis.status.actualId} vs #{analysis.status.expectedId})
-                        </span>
-                      );
-                    }
-
-                    if (analysis.status.type.startsWith("conflict")) {
-                      return (
-                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-400 rounded-md font-medium">
-                          <AlertCircle className="h-3 w-3 shrink-0" />
-                          Configuration Mismatch
-                        </span>
-                      );
-                    }
-
-                    if (analysis.status.type === "duplicate") {
-                      return (
-                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-400 rounded-md font-medium">
-                          <AlertCircle className="h-3 w-3 shrink-0" />
-                          Duplicate of Share #{analysis.status.originalCardIdx + 1}
-                        </span>
-                      );
-                    }
-
-                    // Valid share matching session
-                    return (
-                      <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md font-medium">
-                        {isSingleGroup
-                          ? `Backup #${input.metadata!.identifier} · Share ${input.metadata!.memberIndex + 1}`
-                          : `Backup #${input.metadata!.identifier} · Group ${input.metadata!.groupIndex + 1} · Share ${input.metadata!.memberIndex + 1}`}
-                      </span>
-                    );
-                  })()}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeShareInput(input.id)}
-                  className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Remove
-                </button>
-              </div>
-
-            <MnemonicInput
-              wordCount={20}
-              wordlist={SLIP39_WORD_LIST}
-              words={input.words}
-              onChange={(words) => updateShareWords(input.id, words)}
-              labelPrefix="Share Word"
-              onValidatePhrase={validateSlip39Mnemonic}
-            />
-
-            {/* Auto-Fix Section */}
-            {(() => {
-              const isFull = input.words.length === 20 && input.words.every((w) => w.trim() !== "");
-              const areAllWordsValid = isFull && input.words.every((w) => SLIP39_WORD_LIST.includes(w.toLowerCase().trim()));
-              const isChecksumInvalid = areAllWordsValid && !validateSlip39Mnemonic(input.words.join(" "));
-
-              if (!isChecksumInvalid) {
-                const correctedInfo = correctedShares[input.id];
-                if (correctedInfo) {
-                  const originalWord = correctedInfo.original[correctedInfo.diffIndex];
-                  const correctedWord = correctedInfo.corrected[correctedInfo.diffIndex];
-                  return (
-                    <div className="mt-4 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-2.5 animate-fade-in text-xs">
-                      <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
-                        <Check className="h-4 w-4 shrink-0" />
-                        <span>
-                          Word #{correctedInfo.diffIndex + 1} auto-corrected:{" "}
-                          <span className="line-through text-slate-400 dark:text-slate-500">{originalWord}</span>{" "}
-                          ➔ <span className="font-mono bg-emerald-500/10 px-1 py-0.5 rounded text-emerald-800 dark:text-emerald-300 font-semibold">{correctedWord}</span>
-                        </span>
-                      </div>
-                      <div className="bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 p-3 rounded-lg flex gap-2">
-                        <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                        <div>
-                          <p className="font-semibold mb-0.5 text-amber-800 dark:text-amber-400">Verification Required</p>
-                          <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-                            The share has been corrected to satisfy the checksum. Please verify that its 
-                            <strong className="text-amber-900 dark:text-amber-200"> Backup ID ({input.metadata?.identifier !== undefined ? `#${input.metadata.identifier}` : "---"})</strong> and 
-                            <strong className="text-amber-900 dark:text-amber-200"> Group/Member index</strong> match your other shares. 
-                            If they do not match, the correction may have targeted the wrong word due to multiple initial input errors.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }
-
-              const correctedPhrase = attemptCorrectSlip39Mnemonic(input.words.join(" "));
-              const isFixable = correctedPhrase !== null;
-
-              return (
-                <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in text-xs">
-                  <div className="space-y-1">
-                    <span className="font-semibold block text-slate-900 dark:text-slate-300">
-                      {isFixable ? "🔧 Correctable Error Detected" : "⚠️ Uncorrectable Error"}
-                    </span>
-                    <span className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed block max-w-lg">
-                      {isFixable 
-                        ? "A single-word substitution error has been found. You can attempt to automatically correct this share."
-                        : "Multiple word errors or an unsupported configuration detected. Auto-correction is not possible for this share."
-                      }
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={!isFixable}
-                    onClick={() => {
-                      if (correctedPhrase) {
-                        handleAutoFix(input.id, [...input.words], correctedPhrase.split(" "));
-                      }
-                    }}
-                    className={`flex items-center justify-center gap-1.5 px-4 py-2 font-semibold rounded-lg shrink-0 transition-all duration-200 cursor-pointer ${
-                      isFixable
-                        ? "bg-violet-500/10 hover:bg-violet-600 dark:bg-violet-600/20 text-violet-700 dark:text-violet-300 hover:text-white border border-violet-500/30"
-                        : "bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                    }`}
-                  >
-                    <Wand2 className="h-3.5 w-3.5" />
-                    Attempt Auto-Fix
-                  </button>
-                </div>
-              );
-            })()}
-          </div>
-        );
-      })}
+        {shareInputs.map((input, idx) => (
+          <ShareCard
+            key={input.id}
+            input={input}
+            idx={idx}
+            analysis={analyzedShares[idx]}
+            isSingleGroup={isSingleGroup}
+            correctedInfo={correctedShares[input.id]}
+            onUpdateWords={(words) => updateShareWords(input.id, words)}
+            onRemove={() => removeShareInput(input.id)}
+            onAutoFix={(originalWords, correctedWords) =>
+              handleAutoFix(input.id, originalWords, correctedWords)
+            }
+            onNext={handleCardNext}
+            autoFocus={focusTarget?.id === input.id ? focusTarget.timestamp : undefined}
+          />
+        ))}
       </div>
 
       {/* Add Share Action */}
       <div className="flex justify-center pt-2">
         <button
           type="button"
-          onClick={addShareInput}
+          onClick={handleManualAddShare}
           className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-violet-700 dark:text-violet-300 font-semibold border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 rounded-xl transition-all duration-200 cursor-pointer shadow-sm hover:shadow"
         >
           <Plus className="h-4 w-4" />
@@ -678,10 +818,17 @@ export default function Recoverer() {
                     Seed Recovered
                   </span>
                 ) : isReadyForRecovery ? (
-                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-sans font-semibold text-[11px] animate-pulse">
-                    <Check className="h-3 w-3 shrink-0" />
-                    Ready for Recovery!
-                  </span>
+                  <>
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-sans font-semibold text-[11px] animate-pulse">
+                      <Check className="h-3 w-3 shrink-0" />
+                      Ready for Recovery!
+                    </span>
+                    {(hasConflicts || hasDuplicates || hasInvalidEnteredShares) && (
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-sans text-[11px]">
+                        Extra shares ignored
+                      </span>
+                    )}
+                  </>
                 ) : hasConflicts ? (
                   <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-sans font-medium text-[11px]">
                     <AlertCircle className="h-3 w-3 shrink-0" />

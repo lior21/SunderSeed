@@ -8,6 +8,7 @@ interface MnemonicInputProps {
   onChange: (words: string[]) => void;
   labelPrefix?: string;
   onValidatePhrase?: (phrase: string) => boolean;
+  autoFocus?: boolean | number;
 }
 
 export default function MnemonicInput({
@@ -16,7 +17,8 @@ export default function MnemonicInput({
   words,
   onChange,
   labelPrefix = 'Word',
-  onValidatePhrase
+  onValidatePhrase,
+  autoFocus = false
 }: MnemonicInputProps) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -25,6 +27,17 @@ export default function MnemonicInput({
 
   const areAllWordsValid = words.length === wordCount && words.every(w => wordlist.includes(w.trim().toLowerCase()));
   const isPhraseValid = areAllWordsValid && onValidatePhrase ? onValidatePhrase(words.join(' ')) : true;
+
+  // Auto-focus first word cell on mount if requested
+  useEffect(() => {
+    if (autoFocus) {
+      const firstInput = inputsRef.current[0];
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [autoFocus]);
 
   // Initialize words array if not matching wordCount
   useEffect(() => {
