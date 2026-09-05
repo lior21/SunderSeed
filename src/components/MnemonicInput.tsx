@@ -9,6 +9,7 @@ interface MnemonicInputProps {
   labelPrefix?: string;
   onValidatePhrase?: (phrase: string) => boolean;
   autoFocus?: boolean | number;
+  onNext?: () => void;
 }
 
 export default function MnemonicInput({
@@ -18,7 +19,8 @@ export default function MnemonicInput({
   onChange,
   labelPrefix = 'Word',
   onValidatePhrase,
-  autoFocus = false
+  autoFocus = false,
+  onNext
 }: MnemonicInputProps) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -121,10 +123,30 @@ export default function MnemonicInput({
         inputsRef.current[index + 1]?.focus();
       }
     } else if (e.key === 'Tab') {
-      // If there are suggestions, select the active one
+      if (e.shiftKey) {
+        setSuggestions([]);
+        return;
+      }
+
       if (suggestions.length > 0) {
         e.preventDefault();
         selectSuggestion(index, suggestions[suggestionIdx]);
+      } else {
+        const currentWord = (words[index] || '').trim().toLowerCase();
+        const isValid = wordlist.includes(currentWord);
+        if (isValid) {
+          setSuggestions([]);
+          if (index < wordCount - 1) {
+            e.preventDefault();
+            inputsRef.current[index + 1]?.focus();
+          } else if (index === wordCount - 1 && onNext) {
+            e.preventDefault();
+            setTimeout(() => onNext(), 0);
+          }
+        } else {
+          // Word is not complete with a valid word: keep focus on current field
+          e.preventDefault();
+        }
       }
     } else if (e.key === 'ArrowDown' && suggestions.length > 0) {
       e.preventDefault();
@@ -148,6 +170,8 @@ export default function MnemonicInput({
     // Auto-focus next input
     if (index < wordCount - 1) {
       inputsRef.current[index + 1]?.focus();
+    } else if (index === wordCount - 1 && onNext) {
+      setTimeout(() => onNext(), 0);
     }
   };
 
@@ -188,9 +212,21 @@ export default function MnemonicInput({
                   onChange={e => handleInputChange(idx, e.target.value)}
                   onPaste={e => handlePaste(idx, e)}
                   onKeyDown={e => handleKeyDown(idx, e)}
-                  onFocus={() => {
+                  onMouseDown={e => {
+                    if (document.activeElement !== e.currentTarget) {
+                      e.preventDefault();
+                      e.currentTarget.focus();
+                      if (word.length > 0) {
+                        e.currentTarget.select();
+                      }
+                    }
+                  }}
+                  onFocus={e => {
                     setActiveIdx(idx);
                     showSuggestionsForValue(word);
+                    if (word.length > 0) {
+                      e.currentTarget.select();
+                    }
                   }}
                   onBlur={() => {
                     // Set active index to null only if it hasn't changed to another input

@@ -101,9 +101,8 @@ function ShareCard({
   const effectiveCollapsed = isCollapsed && canCollapse;
 
   const handleNext = () => {
-    if (canCollapse) {
-      setIsCollapsed(true);
-    }
+    if (!canCollapse) return;
+    setIsCollapsed(true);
     onNext();
   };
 
@@ -240,6 +239,7 @@ function ShareCard({
           labelPrefix="Share Word"
           onValidatePhrase={validateSlip39Mnemonic}
           autoFocus={autoFocus}
+          onNext={handleNext}
         />
 
         {/* Auto-Fix Section */}
