@@ -7,6 +7,34 @@ import { GithubIcon } from './components/GithubIcon';
 const GITHUB_REPO_URL = 'https://github.com/lior21/wordcrux-slip39';
 const THEME_STORAGE_KEY = 'wordcrux-theme';
 
+type Tab = 'generate' | 'recover';
+
+function useHashRoute(): [Tab, (tab: Tab) => void] {
+  const getTab = (): Tab => {
+    if (typeof window === 'undefined') return 'generate';
+    const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
+    if (hash === 'recover' || hash === 'recovery') return 'recover';
+    return 'generate';
+  };
+
+  const [tab, setTab] = useState<Tab>(getTab);
+
+  useEffect(() => {
+    const handleHashChange = () => setTab(getTab());
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const navigateTab = (newTab: Tab) => {
+    if (window.location.hash.toLowerCase().replace(/^#\/?/, '') !== newTab) {
+      window.location.hash = newTab;
+    }
+    setTab(newTab);
+  };
+
+  return [tab, navigateTab];
+}
+
 function getInitialTheme(): 'dark' | 'light' {
   try {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -25,7 +53,8 @@ function getInitialTheme(): 'dark' | 'light' {
 async function downloadOfflineApp() {
   let htmlContent = '';
   try {
-    const res = await fetch(window.location.href);
+    const cleanUrl = window.location.href.split('#')[0];
+    const res = await fetch(cleanUrl);
     if (res.ok) {
       htmlContent = await res.text();
     }
@@ -53,7 +82,7 @@ async function downloadOfflineApp() {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'generate' | 'recover'>('generate');
+  const [activeTab, setActiveTab] = useHashRoute();
   const [theme, setTheme] = useState<'dark' | 'light'>(getInitialTheme);
 
   useEffect(() => {
