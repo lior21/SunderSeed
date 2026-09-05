@@ -481,6 +481,8 @@ export default function Recoverer() {
     hasInvalidEnteredShares,
     hasConflicts,
     hasDuplicates,
+    hasExtraShares,
+    minimalRecoveryShares,
     isReadyForRecovery,
   } = useMemo(() => {
     // 1. First valid share locks the Session Schema
@@ -628,6 +630,22 @@ export default function Recoverer() {
     const enteredGroups = completedGroups.length;
     const metGroups = session !== null && enteredGroups >= neededGroups;
 
+    const minimalRecoveryShares: string[] = [];
+    if (metGroups && session) {
+      const selectedGroups = [...completedGroups]
+        .sort((a, b) => a.groupIndex - b.groupIndex)
+        .slice(0, neededGroups);
+
+      for (const group of selectedGroups) {
+        const groupShares = group.shares.slice(0, group.threshold);
+        for (const s of groupShares) {
+          minimalRecoveryShares.push(s.phrase);
+        }
+      }
+    }
+
+    const hasExtraShares = valids.length > minimalRecoveryShares.length;
+
     const singleThreshold = singleGroup ? (session?.memberThreshold ?? 0) : 0;
     const singleEntered = singleGroup ? (groupMap[0]?.enteredCount ?? 0) : 0;
 
@@ -653,6 +671,8 @@ export default function Recoverer() {
       hasInvalidEnteredShares: invalidEntered,
       hasConflicts: conflicts.length > 0,
       hasDuplicates: duplicates.length > 0,
+      hasExtraShares,
+      minimalRecoveryShares,
       isReadyForRecovery: ready,
     };
   }, [shareInputs]);
@@ -702,16 +722,19 @@ export default function Recoverer() {
     setRecoveredMnemonic(null);
     setShowMnemonic(false);
 
-    const validSharesList = validShares.map((s) => s.input.words.join(" "));
+    const sharesToUse =
+      minimalRecoveryShares.length > 0
+        ? minimalRecoveryShares
+        : validShares.map((s) => s.input.words.join(" "));
 
-    if (validSharesList.length === 0) {
+    if (sharesToUse.length === 0) {
       setError("Please fill in at least one valid 20-word SLIP-39 share.");
       setIsDockCollapsed(false);
       return;
     }
 
     try {
-      const recovered = slip39ToBip39(validSharesList, passphrase);
+      const recovered = slip39ToBip39(sharesToUse, passphrase);
       setRecoveredMnemonic(recovered);
       setShowMnemonic(true);
       setIsDockCollapsed(false);
@@ -839,7 +862,7 @@ export default function Recoverer() {
 
                 {/* 3. Actionable Status Badge */}
                 {isReadyForRecovery ? (
-                  (hasConflicts || hasDuplicates || hasInvalidEnteredShares) ? (
+                  (hasConflicts || hasDuplicates || hasInvalidEnteredShares || hasExtraShares) ? (
                     <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-sans text-[11px]">
                       Extra shares ignored
                     </span>

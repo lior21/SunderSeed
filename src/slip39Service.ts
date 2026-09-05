@@ -68,6 +68,71 @@ export function bip39ToSlip39(
 }
 
 /**
+ * Prunes a list of SLIP-39 shares to the minimal sufficient subset for reconstruction.
+ * Automatically filters out duplicates, conflicting backups, incomplete groups, and surplus shares/groups.
+ */
+export function pruneSlip39Shares(shares: string[]): string[] {
+  if (!shares || shares.length === 0) return [];
+
+  const validItems: { phrase: string; meta: ShareMetadata }[] = [];
+  for (const rawShare of shares) {
+    const clean = rawShare.trim().toLowerCase().replace(/\s+/g, ' ');
+    const meta = decodeShareMetadata(clean);
+    if (meta && validateSlip39Mnemonic(clean)) {
+      validItems.push({ phrase: clean, meta });
+    }
+  }
+
+  if (validItems.length === 0) return shares;
+
+  // Lock session using the first valid share
+  const session = validItems[0].meta;
+  const sessionShares = validItems.filter(
+    item =>
+      item.meta.identifier === session.identifier &&
+      item.meta.iterationExponent === session.iterationExponent &&
+      item.meta.groupCount === session.groupCount &&
+      item.meta.groupThreshold === session.groupThreshold
+  );
+
+  // Group by groupIndex and deduplicate by memberIndex
+  const groupMap = new Map<number, { threshold: number; shares: Map<number, string> }>();
+  for (const item of sessionShares) {
+    if (!groupMap.has(item.meta.groupIndex)) {
+      groupMap.set(item.meta.groupIndex, {
+        threshold: item.meta.memberThreshold,
+        shares: new Map<number, string>(),
+      });
+    }
+    const grp = groupMap.get(item.meta.groupIndex)!;
+    if (!grp.shares.has(item.meta.memberIndex)) {
+      grp.shares.set(item.meta.memberIndex, item.phrase);
+    }
+  }
+
+  // Filter completed groups
+  const completedGroups: { groupIndex: number; threshold: number; shares: string[] }[] = [];
+  for (const [groupIndex, grp] of groupMap.entries()) {
+    if (grp.shares.size >= grp.threshold) {
+      completedGroups.push({
+        groupIndex,
+        threshold: grp.threshold,
+        shares: Array.from(grp.shares.values()).slice(0, grp.threshold),
+      });
+    }
+  }
+
+  completedGroups.sort((a, b) => a.groupIndex - b.groupIndex);
+
+  if (completedGroups.length >= session.groupThreshold) {
+    const selectedGroups = completedGroups.slice(0, session.groupThreshold);
+    return selectedGroups.flatMap(g => g.shares);
+  }
+
+  return shares;
+}
+
+/**
  * Recovers the 12-word BIP-39 mnemonic from a set of SLIP-39 shares.
  * 
  * @param shares List of SLIP-39 shares (each 20 words)
@@ -79,9 +144,10 @@ export function slip39ToBip39(shares: string[], passphrase = ''): string {
   }
 
   const cleanShares = shares.map(s => s.trim().toLowerCase().replace(/\s+/g, ' '));
+  const prunedShares = pruneSlip39Shares(cleanShares);
 
   // 1. Recover the raw entropy array from SLIP-39 shares
-  const recoveredEntropyArray = Slip39.recoverSecret(cleanShares, passphrase);
+  const recoveredEntropyArray = Slip39.recoverSecret(prunedShares, passphrase);
   
   // 2. Convert to Uint8Array for BIP-39
   const recoveredEntropyUint8 = new Uint8Array(recoveredEntropyArray);
