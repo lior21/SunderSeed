@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 
+// Layout and visual constants
+const VIEWPORT_PADDING_PX = 16;
+const DROPDOWN_HEIGHT_PX = 175;
+const MAX_SUGGESTIONS_COUNT = 5;
+const MIN_SUGGESTION_PREFIX_LENGTH = 2;
+const BLUR_RESET_DELAY_MS = 150;
+
 interface MnemonicInputProps {
   wordCount: number;
   wordlist: string[];
@@ -10,6 +17,8 @@ interface MnemonicInputProps {
   onValidatePhrase?: (phrase: string) => boolean;
   autoFocus?: boolean | number;
   onNext?: () => void;
+  topOffset?: number;
+  bottomOffset?: number;
 }
 
 export default function MnemonicInput({
@@ -20,12 +29,46 @@ export default function MnemonicInput({
   labelPrefix = 'Word',
   onValidatePhrase,
   autoFocus = false,
-  onNext
+  onNext,
+  topOffset = 0,
+  bottomOffset = 0
 }: MnemonicInputProps) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestionIdx, setSuggestionIdx] = useState<number>(0);
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Smoothly scroll cell and its suggestions into view if obscured
+  const ensureVisible = (el: HTMLInputElement | null) => {
+    if (!el) return;
+    requestAnimationFrame(() => {
+      // Measure whole word cell (label + input)
+      const cell = el.closest<HTMLElement>('.relative.flex.flex-col') || el;
+      const rect = cell.getBoundingClientRect();
+      const minTop = topOffset + VIEWPORT_PADDING_PX;
+
+      // Height for suggestions dropdown + consumer bottomOffset + comfortable spacing
+      const bottomSafety = DROPDOWN_HEIGHT_PX + bottomOffset + VIEWPORT_PADDING_PX;
+      const viewportHeight = window.innerHeight;
+
+      if (rect.top < minTop) {
+        window.scrollBy({
+          top: rect.top - minTop,
+          behavior: 'smooth',
+        });
+      } else if (rect.bottom + bottomSafety > viewportHeight) {
+        const scrollNeeded = (rect.bottom + bottomSafety) - viewportHeight;
+        const maxScroll = Math.max(0, rect.top - minTop);
+        const actualScroll = Math.min(scrollNeeded, maxScroll);
+        if (actualScroll > 0) {
+          window.scrollBy({
+            top: actualScroll,
+            behavior: 'smooth',
+          });
+        }
+      }
+    });
+  };
 
   const areAllWordsValid = words.length === wordCount && words.every(w => wordlist.includes(w.trim().toLowerCase()));
   const isPhraseValid = areAllWordsValid && onValidatePhrase ? onValidatePhrase(words.join(' ')) : true;
@@ -35,7 +78,7 @@ export default function MnemonicInput({
     if (autoFocus) {
       const firstInput = inputsRef.current[0];
       if (firstInput) {
-        firstInput.focus();
+        firstInput.focus({ preventScroll: true });
         firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
@@ -54,10 +97,10 @@ export default function MnemonicInput({
   // Show/update autocomplete suggestions for a given input value
   const showSuggestionsForValue = (val: string) => {
     const cleanVal = val.trim().toLowerCase();
-    if (cleanVal.length >= 2) {
+    if (cleanVal.length >= MIN_SUGGESTION_PREFIX_LENGTH) {
       const filtered = wordlist
         .filter(w => w.startsWith(cleanVal))
-        .slice(0, 5);
+        .slice(0, MAX_SUGGESTIONS_COUNT);
       setSuggestions(filtered);
       setSuggestionIdx(0);
     } else {
@@ -106,7 +149,7 @@ export default function MnemonicInput({
       
       // Focus on the next empty field or the last filled field
       const nextFocus = Math.min(index + parsedWords.length, wordCount - 1);
-      inputsRef.current[nextFocus]?.focus();
+      inputsRef.current[nextFocus]?.focus({ preventScroll: true });
     }
   };
 
@@ -120,7 +163,7 @@ export default function MnemonicInput({
       } else if (words[index].length > 0 && index < wordCount - 1) {
         // Go to next input
         e.preventDefault();
-        inputsRef.current[index + 1]?.focus();
+        inputsRef.current[index + 1]?.focus({ preventScroll: true });
       }
     } else if (e.key === 'Tab') {
       if (e.shiftKey) {
@@ -138,7 +181,7 @@ export default function MnemonicInput({
           setSuggestions([]);
           if (index < wordCount - 1) {
             e.preventDefault();
-            inputsRef.current[index + 1]?.focus();
+            inputsRef.current[index + 1]?.focus({ preventScroll: true });
           } else if (index === wordCount - 1 && onNext) {
             e.preventDefault();
             setTimeout(() => onNext(), 0);
@@ -157,7 +200,7 @@ export default function MnemonicInput({
     } else if (e.key === 'Backspace' && words[index] === '' && index > 0) {
       // Go to previous input on backspace
       e.preventDefault();
-      inputsRef.current[index - 1]?.focus();
+      inputsRef.current[index - 1]?.focus({ preventScroll: true });
     }
   };
 
@@ -169,7 +212,7 @@ export default function MnemonicInput({
     
     // Auto-focus next input
     if (index < wordCount - 1) {
-      inputsRef.current[index + 1]?.focus();
+      inputsRef.current[index + 1]?.focus({ preventScroll: true });
     } else if (index === wordCount - 1 && onNext) {
       setTimeout(() => onNext(), 0);
     }
@@ -215,7 +258,7 @@ export default function MnemonicInput({
                   onMouseDown={e => {
                     if (document.activeElement !== e.currentTarget) {
                       e.preventDefault();
-                      e.currentTarget.focus();
+                      e.currentTarget.focus({ preventScroll: true });
                       if (word.length > 0) {
                         e.currentTarget.select();
                       }
@@ -227,12 +270,13 @@ export default function MnemonicInput({
                     if (word.length > 0) {
                       e.currentTarget.select();
                     }
+                    ensureVisible(e.currentTarget);
                   }}
                   onBlur={() => {
                     // Set active index to null only if it hasn't changed to another input
                     setTimeout(() => {
                       setActiveIdx(current => current === idx ? null : current);
-                    }, 150);
+                    }, BLUR_RESET_DELAY_MS);
                   }}
                   className={`w-full pl-1.5 pr-6 py-2 bg-transparent border-x-0 border-t-0 border-b font-mono text-sm leading-none text-slate-900 dark:text-slate-100 focus:outline-none transition-all duration-200 ${
                     isNotEmpty

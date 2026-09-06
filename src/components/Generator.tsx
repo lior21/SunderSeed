@@ -27,6 +27,8 @@ interface GroupConfig {
   count: number;
 }
 
+const STICKY_HEADER_OFFSET_PX = 70;
+
 export default function Generator() {
   const [bip39Words, setBip39Words] = useState<string[]>(Array(12).fill(""));
   const [passphrase, setPassphrase] = useState("");
@@ -196,6 +198,7 @@ export default function Generator() {
           onChange={setBip39Words}
           labelPrefix="Seed Word"
           onValidatePhrase={validateBip39Mnemonic}
+          topOffset={STICKY_HEADER_OFFSET_PX}
         />
       </div>
 

@@ -26,6 +26,8 @@ import {
 } from "../slip39Service";
 import type { ShareMetadata } from "../slip39Service";
 
+const STICKY_HEADER_OFFSET_PX = 70;
+
 interface ShareInput {
   id: string;
   words: string[];
@@ -78,6 +80,7 @@ interface ShareCardProps {
   onAutoFix: (originalWords: string[], correctedWords: string[]) => void;
   onNext: () => void;
   autoFocus?: boolean | number;
+  bottomOffset?: number;
 }
 
 function ShareCard({
@@ -91,6 +94,7 @@ function ShareCard({
   onAutoFix,
   onNext,
   autoFocus = false,
+  bottomOffset = 0,
 }: ShareCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -240,6 +244,8 @@ function ShareCard({
           onValidatePhrase={validateSlip39Mnemonic}
           autoFocus={autoFocus}
           onNext={handleNext}
+          topOffset={STICKY_HEADER_OFFSET_PX}
+          bottomOffset={bottomOffset}
         />
 
         {/* Auto-Fix Section */}
@@ -349,6 +355,7 @@ export default function Recoverer() {
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
   const [isStuck, setIsStuck] = useState(false);
+  const [dockHeight, setDockHeight] = useState(80);
   const dockRef = useRef<HTMLDivElement>(null);
 
   // Recovery output
@@ -369,13 +376,14 @@ export default function Recoverer() {
     >
   >({});
 
-  // Detect when the dock is actually sticking to the viewport bottom
+  // Detect when the dock is actually sticking to the viewport bottom and track height
   useEffect(() => {
     const handleCheck = () => {
       if (!dockRef.current) return;
       const rect = dockRef.current.getBoundingClientRect();
       const stuck = Math.abs(rect.bottom - window.innerHeight) <= 3;
       setIsStuck(stuck);
+      setDockHeight(Math.round(rect.height));
     };
 
     handleCheck();
@@ -798,6 +806,7 @@ export default function Recoverer() {
             }
             onNext={handleCardNext}
             autoFocus={focusTarget?.id === input.id ? focusTarget.timestamp : undefined}
+            bottomOffset={dockHeight}
           />
         ))}
       </div>
