@@ -47,11 +47,11 @@
   <ellipse cx="790" cy="320" rx="360" ry="240" fill="url(#ogGlowBlue)" />
   <rect width="1200" height="630" fill="url(#ogGrid)" mask="url(#ogGridMask)" />
 
-  <!-- Lockup: icon tile + wordmark (horizontal, within WhatsApp safe zone) -->
+  <!-- Lockup: icon tile + wordmark (within WhatsApp safe zone) -->
   <!-- Safe zone: x from 285 to 915 (630px wide), centered in 1200x630 image -->
-  <!-- Lockup left edge at x=285 so entire lockup stays within safe zone -->
-  <!-- Text at x=459 was already inside safe zone, keeping it unchanged -->
-  <g transform="translate(285 231)">
+  <!-- Lockup shifted right by 6px so entire icon stays within safe zone -->
+  <!-- Text at x=459 left unchanged - was already inside safe zone -->
+  <g transform="translate(291 231)">
     <rect width="168" height="168" rx="42" fill="url(#ogTile)" />
     <g transform="translate(82 84) scale(2.1) translate(-31 -31.5)">
       <path d="M28 5 L18 22 L12 40 L16 52 L28 58 L38 56 L46 44 L50 28 L40 10 L34 6 Z" fill="#ffffff" />
