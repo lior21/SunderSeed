@@ -1,12 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
   <defs>
-    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed" />
-      <stop offset="100%" stop-color="#c026d3" />
+    <linearGradient id="sunderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#2563eb" />
     </linearGradient>
   </defs>
-  <!-- Shield shape -->
-  <path d="M32 4 C44 4, 54 10, 54 22 C54 38, 40 54, 32 60 C24 54, 10 38, 10 22 C10 10, 20 4, 32 4 Z" fill="url(#shieldGrad)" />
-  <!-- Lightning bolt symbol -->
-  <polygon points="35,14 21,34 31,34 27,50 43,30 33,30" fill="#ffffff" />
+  <path d="M28 5 L18 22 L12 40 L16 52 L28 58 L38 56 L46 44 L50 28 L40 10 L34 6 Z" fill="url(#sunderGrad)" />
 </svg>

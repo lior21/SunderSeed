@@ -124,7 +124,7 @@ function ShareCard({
     >
       {/* Contextual Glow */}
       {isShareValid && analysis?.status.type === "valid" && (
-        <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-xl -z-10 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-xl -z-10 pointer-events-none"></div>
       )}
       {isConflict && (
         <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-xl -z-10 pointer-events-none"></div>
@@ -314,7 +314,7 @@ function ShareCard({
                 }}
                 className={`flex items-center justify-center gap-1.5 px-4 py-2 font-semibold rounded-lg shrink-0 transition-all duration-200 cursor-pointer ${
                   isFixable
-                    ? "bg-violet-500/10 hover:bg-violet-600 dark:bg-violet-600/20 text-violet-700 dark:text-violet-300 hover:text-white border border-violet-500/30"
+                    ? "bg-cyan-500/10 hover:bg-cyan-600 dark:bg-cyan-600/20 text-cyan-700 dark:text-cyan-300 hover:text-white border border-cyan-500/30"
                     : "bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
                 }`}
               >
@@ -335,7 +335,7 @@ function ShareCard({
             aria-label="Next share"
             className={`p-3 rounded-xl transition-all duration-200 flex items-center justify-center ${
               canCollapse
-                ? "bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg shadow-violet-500/20 cursor-pointer"
+                ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-md hover:shadow-lg shadow-cyan-500/20 cursor-pointer"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border border-slate-200 dark:border-slate-700/50 cursor-not-allowed"
             }`}
           >
@@ -816,7 +816,7 @@ export default function Recoverer() {
         <button
           type="button"
           onClick={handleManualAddShare}
-          className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-violet-700 dark:text-violet-300 font-semibold border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 rounded-xl transition-all duration-200 cursor-pointer shadow-sm hover:shadow"
+          className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-cyan-700 dark:text-cyan-300 font-semibold border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 rounded-xl transition-all duration-200 cursor-pointer shadow-sm hover:shadow"
         >
           <Plus className="h-4 w-4" />
           Add Share Mnemonic
@@ -836,8 +836,8 @@ export default function Recoverer() {
             {/* Header Row: Title, Quick Badges & Minimize/Expand toggle */}
           <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="flex items-center gap-1.5 font-semibold text-sm sm:text-base text-slate-900 dark:text-slate-100">
-                <Info className="h-4 w-4 sm:h-5 sm:w-5 text-violet-600 dark:text-violet-400 shrink-0" />
+              <div className="flex items-center gap-1.5 font-semibold text-sm sm:base text-slate-900 dark:text-slate-100">
+                <Info className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-600 dark:text-cyan-400 shrink-0" />
                 <span>Backup Metadata & Recovery</span>
               </div>
 
@@ -845,7 +845,7 @@ export default function Recoverer() {
               <div className="flex items-center gap-1.5 text-xs font-mono flex-wrap">
                 {/* 1. Session Backup Identifier */}
                 {sessionMeta ? (
-                  <span className="px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-700 dark:text-violet-300 font-semibold border border-violet-500/20 font-mono">
+                  <span className="px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-semibold border border-cyan-500/20 font-mono">
                     ID: #{sessionMeta.identifier}
                   </span>
                 ) : (
@@ -898,14 +898,14 @@ export default function Recoverer() {
                 ) : sessionMeta ? (
                   isSingleGroup ? (
                     <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-sans font-medium text-[11px]">
-                      <Info className="h-3 w-3 shrink-0 text-violet-500" />
+                      <Info className="h-3 w-3 shrink-0 text-cyan-500" />
                       {singleGroupThreshold - singleGroupEnteredCount === 1
                         ? "Need 1 more share"
                         : `Need ${singleGroupThreshold - singleGroupEnteredCount} more shares`}
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-sans font-medium text-[11px]">
-                      <Info className="h-3 w-3 shrink-0 text-violet-500" />
+                      <Info className="h-3 w-3 shrink-0 text-cyan-500" />
                       {neededGroupsCount - enteredGroupsCount === 1
                         ? "Need 1 more group"
                         : `Need ${neededGroupsCount - enteredGroupsCount} more groups`}
@@ -1105,13 +1105,13 @@ export default function Recoverer() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-0.5">
                 <div className="relative flex-grow">
                   <div className="absolute left-3 top-[50%] -translate-y-[50%] pointer-events-none text-slate-400 dark:text-slate-500">
-                    <Key className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                    <Key className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                   </div>
                   <input
                     type={showPassphrase ? "text" : "password"}
                     value={passphrase}
                     onChange={(e) => setPassphrase(e.target.value)}
-                    className="w-full pl-9 pr-14 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 font-mono text-xs sm:text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 transition-colors"
+                    className="w-full pl-9 pr-14 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 font-mono text-xs sm:text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-colors"
                     placeholder="Decryption passphrase (optional)..."
                   />
                   <button
@@ -1134,7 +1134,7 @@ export default function Recoverer() {
                   }
                   className={`sm:w-auto px-6 py-2.5 font-semibold rounded-xl text-xs sm:text-sm transition-all duration-200 shrink-0 ${
                     isReadyForRecovery
-                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-md hover:shadow-violet-600/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                      ? "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:via-sky-400 hover:to-blue-500 text-white shadow-md hover:shadow-cyan-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                       : "bg-slate-200 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700/60 cursor-not-allowed shadow-none"
                   }`}
                 >
@@ -1262,8 +1262,8 @@ export default function Recoverer() {
               </div>
 
               {/* Security Notice */}
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/20 text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">
-                <ShieldAlert className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-cyan-500/5 dark:bg-cyan-500/10 border border-cyan-500/20 text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">
+                <ShieldAlert className="h-4 w-4 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
                 <span>
                   <strong>Client-Side & Ephemeral:</strong> This secret is generated in your browser and not saved. Once you close this popup, it is immediately dismissed from memory.
                 </span>
@@ -1275,7 +1275,7 @@ export default function Recoverer() {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="w-full sm:w-auto px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-md hover:shadow-violet-600/20 transition-all cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-md hover:shadow-cyan-500/20 transition-all cursor-pointer"
               >
                 Done
               </button>

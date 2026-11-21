@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Shield,
+  Lock,
   Shuffle,
   Copy,
   Check,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import MnemonicInput from "./MnemonicInput";
 import { GithubIcon } from "./GithubIcon";
+import { SunderSeedIcon } from "./SunderSeedIcon";
 import {
   BIP39_WORD_LIST,
   generateBip39Mnemonic,
@@ -169,12 +170,12 @@ export default function Generator() {
     <div className="space-y-8 animate-fade-in">
       <div className="bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 backdrop-blur-xl relative focus-within:z-20 z-10 print-hidden shadow-sm dark:shadow-none transition-colors duration-200">
         {/* Glow effect */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl -z-10 animate-pulse-glow"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl -z-10 animate-pulse-glow"></div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Shield className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              <Lock className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
               1. Input 12-Word BIP-39 Seed Phrase
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
@@ -184,7 +185,7 @@ export default function Generator() {
           <button
             type="button"
             onClick={handleRandomSeed}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 dark:hover:bg-slate-700/80 text-violet-700 dark:text-violet-300 font-medium rounded-xl text-sm transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 dark:hover:bg-slate-700/80 text-cyan-700 dark:text-cyan-300 font-medium rounded-xl text-sm transition-all duration-200 cursor-pointer"
           >
             <Shuffle className="h-4 w-4" />
             Generate Random Seed
@@ -208,7 +209,7 @@ export default function Generator() {
         }`}
       >
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-6">
-          <Settings className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+          <Settings className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
           2. Sharing & Security Configuration
         </h2>
 
@@ -225,7 +226,7 @@ export default function Generator() {
                   onClick={() => setIsAdvanced(false)}
                   className={`flex-1 py-2 text-center rounded-lg text-sm font-medium transition-all cursor-pointer ${
                     !isAdvanced
-                      ? "bg-violet-600 text-white shadow-sm"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-sm"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-300/40 dark:hover:bg-slate-800/40"
                   }`}
                 >
@@ -236,7 +237,7 @@ export default function Generator() {
                   onClick={() => setIsAdvanced(true)}
                   className={`flex-1 py-2 text-center rounded-lg text-sm font-medium transition-all cursor-pointer ${
                     isAdvanced
-                      ? "bg-violet-600 text-white shadow-sm"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-sm"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-300/40 dark:hover:bg-slate-800/40"
                   }`}
                 >
@@ -262,7 +263,7 @@ export default function Generator() {
                           setSimpleCount(val);
                           if (simpleThreshold > val) setSimpleThreshold(val);
                         }}
-                        className="w-32 accent-violet-500"
+                        className="w-32 accent-cyan-500"
                       />
                       <span className="text-slate-900 dark:text-slate-100 font-mono text-sm w-6 text-right">
                         {simpleCount}
@@ -283,7 +284,7 @@ export default function Generator() {
                         onChange={(e) =>
                           setSimpleThreshold(parseInt(e.target.value))
                         }
-                        className="w-32 accent-violet-500"
+                        className="w-32 accent-cyan-500"
                       />
                       <span className="text-slate-900 dark:text-slate-100 font-mono text-sm w-6 text-right">
                         {simpleThreshold}
@@ -292,7 +293,7 @@ export default function Generator() {
                   </div>
 
                   <div className="flex gap-2 items-start text-xs text-slate-600 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-300/60 dark:border-slate-800">
-                    <Info className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
+                    <Info className="h-4 w-4 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
                     <p>
                       This will split your seed phrase into {simpleCount}{" "}
                       shares. You will need any {simpleThreshold} of them to
@@ -311,7 +312,7 @@ export default function Generator() {
                       <button
                         type="button"
                         onClick={addGroup}
-                        className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 font-medium cursor-pointer"
+                        className="flex items-center gap-1 text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-medium cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         Add Group
@@ -354,7 +355,7 @@ export default function Generator() {
                                     const val = parseInt(e.target.value);
                                     updateGroup(group.id, "count", val);
                                   }}
-                                  className="w-32 accent-violet-500"
+                                  className="w-32 accent-cyan-500"
                                 />
                                 <span className="text-slate-900 dark:text-slate-100 font-mono text-sm w-6 text-right">
                                   {group.count}
@@ -376,7 +377,7 @@ export default function Generator() {
                                     const val = parseInt(e.target.value);
                                     updateGroup(group.id, "threshold", val);
                                   }}
-                                  className="w-32 accent-violet-500"
+                                  className="w-32 accent-cyan-500"
                                 />
                                 <span className="text-slate-900 dark:text-slate-100 font-mono text-sm w-6 text-right">
                                   {group.threshold}
@@ -405,7 +406,7 @@ export default function Generator() {
                             setGroupThreshold(parseInt(e.target.value))
                           }
                           disabled={groups.length <= 1}
-                          className="w-24 accent-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-24 accent-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <span className="text-slate-900 dark:text-slate-100 font-mono text-sm w-6 text-right">
                           {groupThreshold}
@@ -414,14 +415,14 @@ export default function Generator() {
                     </div>
 
                     <div className="flex gap-2.5 items-start text-xs text-slate-600 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-300/60 dark:border-slate-800">
-                      <Info className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
+                      <Info className="h-4 w-4 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
                       <div className="space-y-1">
                         <p>
                           This will split your seed phrase into {groups.length}{" "}
                           {groups.length === 1 ? "group" : "groups"} of shares. To
                           recover, you will need to satisfy the requirements of
                           any{" "}
-                          <strong className="text-violet-700 dark:text-violet-300">
+                          <strong className="text-cyan-700 dark:text-cyan-300">
                             {groupThreshold}{" "}
                             {groupThreshold === 1 ? "group" : "groups"}
                           </strong>
@@ -453,7 +454,7 @@ export default function Generator() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-2">
-                  <Key className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                  <Key className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                   Optional Custom Passphrase
                 </label>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
@@ -465,7 +466,7 @@ export default function Generator() {
                     type={showPassphrase ? "text" : "password"}
                     value={passphrase}
                     onChange={(e) => setPassphrase(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 font-mono text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20"
+                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 font-mono text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                     placeholder="Enter custom encryption passphrase..."
                   />
                   <button
@@ -478,8 +479,8 @@ export default function Generator() {
                 </div>
               </div>
 
-              <div className="p-4 bg-violet-500/10 dark:bg-violet-600/10 border border-violet-500/20 rounded-xl">
-                <h3 className="text-xs font-semibold text-violet-700 dark:text-violet-300 uppercase tracking-wide mb-1">
+              <div className="p-4 bg-cyan-500/10 dark:bg-cyan-600/10 border border-cyan-500/20 rounded-xl">
+                <h3 className="text-xs font-semibold text-cyan-700 dark:text-cyan-300 uppercase tracking-wide mb-1">
                   How SLIP-39 works
                 </h3>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -503,7 +504,7 @@ export default function Generator() {
               type="button"
               onClick={handleGenerate}
               disabled={!isSeedValid}
-              className="w-full max-w-xs py-3 px-6 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-violet-600/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:shadow-none"
+              className="w-full max-w-xs py-3 px-6 bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:via-sky-400 hover:to-blue-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:shadow-none"
             >
               Split into SLIP-39 Shares
             </button>
@@ -535,7 +536,7 @@ export default function Generator() {
                 >
                   <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-violet-500/10 dark:bg-violet-600/20 border border-violet-500/30 text-violet-700 dark:text-violet-300 rounded">
+                      <span className="text-xs font-semibold px-2 py-0.5 bg-cyan-500/10 dark:bg-cyan-600/20 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 rounded">
                         Share #{idx + 1}
                       </span>
                       {metadata && isAdvanced && (
@@ -580,7 +581,7 @@ export default function Generator() {
             <button
               type="button"
               onClick={handlePrintShares}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-violet-600/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:via-sky-400 hover:to-blue-500 text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <Printer className="h-4.5 w-4.5" />
               Print Share Cards (A4)
@@ -614,11 +615,11 @@ export default function Generator() {
                 {/* Print Header */}
                 <div className="print-header font-sans">
                   <div className="header-logo">
-                    <Shield className="h-5 w-5 text-white" />
+                    <SunderSeedIcon className="h-5 w-5" />
                   </div>
                   <div className="header-text-container">
                     <div className="header-title">
-                      WordCrux <span className="badge">SLIP39</span>
+                      SunderSeed <span className="badge">SLIP39</span>
                     </div>
                     <div className="header-subtitle">
                       Shamir's Secret Sharing for Mnemonic Seeds
@@ -670,7 +671,7 @@ export default function Generator() {
                   <div className="print-footer-row">
                     <div className="print-footer-repo">
                       <GithubIcon className="h-3.5 w-3.5 text-slate-700" />
-                      <span className="font-mono text-slate-700 font-semibold text-[11px]">lior21/wordcrux-slip39</span>
+                      <span className="font-mono text-slate-700 font-semibold text-[11px]">lior21/sunderseed</span>
                       {versionString && (
                         <>
                           <span className="text-slate-400 font-mono text-[10px] select-none">•</span>

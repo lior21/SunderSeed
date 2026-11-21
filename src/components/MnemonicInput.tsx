@@ -283,7 +283,7 @@ export default function MnemonicInput({
                       ? isValid
                         ? 'border-b-emerald-500/50 focus:border-b-emerald-400'
                         : 'border-b-rose-500/50 focus:border-b-rose-400'
-                      : 'border-b-slate-300 dark:border-b-slate-700 focus:border-b-violet-500'
+                      : 'border-b-slate-300 dark:border-b-slate-700 focus:border-b-cyan-500'
                   }`}
                   placeholder="---"
                   autoComplete="off"
@@ -306,7 +306,7 @@ export default function MnemonicInput({
                       onMouseDown={() => selectSuggestion(idx, sug)}
                       className={`w-full text-left px-3 py-2 transition-colors ${
                         sIdx === suggestionIdx
-                          ? 'bg-violet-600 text-white font-semibold'
+                          ? 'bg-cyan-600 text-white font-semibold'
                           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Shield, Sparkles, RefreshCw, Download, Sun, Moon } from 'lucide-react';
+import { Sparkles, RefreshCw, Download, Sun, Moon } from 'lucide-react';
 import Generator from './components/Generator';
 import Recoverer from './components/Recoverer';
 import { GithubIcon } from './components/GithubIcon';
+import { SunderSeedIcon } from './components/SunderSeedIcon';
 
-const GITHUB_REPO_URL = 'https://github.com/lior21/wordcrux-slip39';
-const THEME_STORAGE_KEY = 'wordcrux-theme';
+const GITHUB_REPO_URL = 'https://github.com/lior21/sunderseed';
+const THEME_STORAGE_KEY = 'sunderseed-theme';
 
 type Tab = 'generate' | 'recover';
 
@@ -71,7 +72,7 @@ async function downloadOfflineApp() {
   const link = document.createElement('a');
   link.href = url;
 
-  const repoName = typeof __REPO_PREFIX__ !== 'undefined' ? __REPO_PREFIX__ : 'lior21-wordcrux-slip39';
+  const repoName = typeof __REPO_PREFIX__ !== 'undefined' ? __REPO_PREFIX__ : 'lior21-sunderseed';
   const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
   link.download = `${repoName}-v${version}.html`;
 
@@ -104,13 +105,13 @@ function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         const oldTitle = document.title;
-        const repoName = typeof __REPO_PREFIX__ !== 'undefined' ? __REPO_PREFIX__ : 'lior21-wordcrux-slip39';
+        const repoName = typeof __REPO_PREFIX__ !== 'undefined' ? __REPO_PREFIX__ : 'lior21-sunderseed';
         const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
 
         document.title = `${repoName}-v${version}`;
 
         setTimeout(() => {
-          document.title = oldTitle || 'Wordcrux';
+          document.title = oldTitle || 'SunderSeed';
         }, 1500);
       }
     };
@@ -121,20 +122,20 @@ function App() {
   const versionString = typeof __APP_VERSION__ !== 'undefined' && __APP_VERSION__ ? `v${__APP_VERSION__}` : undefined;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 flex flex-col selection:bg-violet-600/30 selection:text-violet-900 dark:selection:text-violet-200 transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#060b13] text-slate-900 dark:text-slate-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-950 dark:selection:text-cyan-200 transition-colors duration-200">
       {/* Header */}
-      <header className="border-b border-slate-200 dark:border-slate-900 bg-white/80 dark:bg-slate-950/40 backdrop-blur-md sticky top-0 z-50 print-hidden transition-colors duration-200">
+      <header className="border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/40 backdrop-blur-md sticky top-0 z-50 print-hidden transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0">
-              <Shield className="h-5 w-5 text-white" />
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 shrink-0">
+              <SunderSeedIcon className="h-5 w-5 text-white" />
             </div>
             <div>
               <div className="flex items-baseline gap-2">
-                <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-800 via-purple-700 to-violet-600 dark:from-violet-200 dark:via-fuchsia-100 dark:to-slate-200 bg-clip-text text-transparent">
-                  WordCrux
+                <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-700 via-sky-600 to-blue-700 dark:from-cyan-200 dark:via-sky-200 dark:to-blue-200 bg-clip-text text-transparent">
+                  SunderSeed
                 </h1>
-                <span className="relative -top-[2px] text-[10px] font-semibold px-1.5 py-[1px] bg-violet-500/10 dark:bg-violet-600/20 border border-violet-500/30 rounded text-violet-700 dark:text-violet-300 font-mono">
+                <span className="relative -top-[2px] text-[10px] font-semibold px-1.5 py-[1px] bg-cyan-500/10 dark:bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-700 dark:text-cyan-300 font-mono">
                   SLIP39
                 </span>
               </div>
@@ -147,9 +148,9 @@ function App() {
               href={GITHUB_REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              title="View source code on GitHub (lior21/wordcrux-slip39)"
+              title="View source code on GitHub (lior21/sunderseed)"
               aria-label="GitHub Repository"
-              className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 hover:border-violet-500/40 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm hover:shadow-violet-500/10"
+              className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 hover:border-cyan-500/40 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm hover:shadow-cyan-500/10"
             >
               <GithubIcon className="h-5 w-5" />
             </a>
@@ -160,7 +161,7 @@ function App() {
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
               aria-label="Toggle theme"
-              className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 hover:border-violet-500/40 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm hover:shadow-violet-500/10"
+              className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 hover:border-cyan-500/40 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm hover:shadow-cyan-500/10"
             >
               {theme === 'dark' ? (
                 <Sun className="h-4 w-4 text-amber-400" />
@@ -173,12 +174,12 @@ function App() {
               type="button"
               onClick={downloadOfflineApp}
               title="Download single-file HTML for air-gapped use (Ctrl+S / ⌘S)"
-              className="hidden sm:inline-flex h-9 items-center gap-2 px-3.5 rounded-full text-xs font-semibold bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-700 dark:text-violet-300 transition-colors cursor-pointer"
+              className="hidden sm:inline-flex h-9 items-center gap-2 px-3.5 rounded-full text-xs font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 transition-colors cursor-pointer"
             >
               <Download className="h-3.5 w-3.5 shrink-0" />
               <span className="leading-none">Download Standalone Tool</span>
               {versionString && (
-                <span className="text-violet-600/80 dark:text-violet-400/80 font-mono text-[11px] leading-none hidden md:inline-flex items-center">
+                <span className="text-cyan-600/80 dark:text-cyan-400/80 font-mono text-[11px] leading-none hidden md:inline-flex items-center">
                   {versionString}
                 </span>
               )}
@@ -192,7 +193,7 @@ function App() {
 
         {/* Intro Banner */}
         <section className="text-center space-y-3 max-w-2xl mx-auto mb-6 print-hidden">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-500/10 border border-violet-500/20 rounded-full text-xs text-violet-700 dark:text-violet-300 font-medium animate-pulse">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-xs text-cyan-700 dark:text-cyan-300 font-medium animate-pulse">
             <Sparkles className="h-3 w-3" />
             Zero network requests, safe & offline-capable
           </div>
@@ -212,7 +213,7 @@ function App() {
               onClick={() => setActiveTab('generate')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
                 activeTab === 'generate'
-                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/25'
+                  ? 'bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white shadow-md shadow-cyan-500/25'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-300/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -224,7 +225,7 @@ function App() {
               onClick={() => setActiveTab('recover')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
                 activeTab === 'recover'
-                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/25'
+                  ? 'bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white shadow-md shadow-cyan-500/25'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-300/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -241,24 +242,24 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-900 bg-white/60 dark:bg-slate-950/40 py-8 text-center text-xs text-slate-500 font-medium print-hidden transition-colors duration-200">
+      <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white/60 dark:bg-slate-950/40 py-8 text-center text-xs text-slate-500 font-medium print-hidden transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 space-y-3">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-600 dark:text-slate-400">
             <a
               href={GITHUB_REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-mono hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-mono hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
             >
               <GithubIcon className="h-3.5 w-3.5" />
-              lior21/wordcrux-slip39
+              lior21/sunderseed
             </a>
             <span className="text-slate-300 dark:text-slate-700">•</span>
             <a
               href={`${GITHUB_REPO_URL}/blob/main/LICENSE`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
             >
               License
             </a>
@@ -267,7 +268,7 @@ function App() {
               href="https://github.com/satoshilabs/slips/blob/master/slip-0039.md"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
             >
               SLIP-0039 Spec
             </a>
@@ -276,20 +277,20 @@ function App() {
               href={`${GITHUB_REPO_URL}/issues`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
             >
               Report Issue
             </a>
             {versionString && (
               <>
                 <span className="text-slate-300 dark:text-slate-700">•</span>
-                <span className="font-mono text-violet-700 dark:text-violet-300/80 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20 text-[11px]">
+                <span className="font-mono text-cyan-700 dark:text-cyan-300/80 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 text-[11px]">
                   {versionString}
                 </span>
               </>
             )}
           </div>
-          <p>© 2026 WordCrux SLIP-39. Built using standard audited packages for local client-side execution.</p>
+          <p>© 2026 SunderSeed. Built using standard audited packages for local client-side execution.</p>
 
           {/* Desktop Security Tip */}
           <p className="hidden sm:block text-slate-500 dark:text-slate-600">
@@ -307,4 +308,3 @@ function App() {
 }
 
 export default App;
-

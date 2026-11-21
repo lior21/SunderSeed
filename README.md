@@ -1,8 +1,8 @@
-# WordCrux SLIP-39
+# SunderSeed
 
 > **Secure, client-side Shamir's Secret Sharing (SLIP-0039) tool for BIP-39 wallet seed phrases.**
 
-WordCrux SLIP-39 is a browser-based, offline-capable cryptographic tool designed to split a standard **12-word BIP-39 mnemonic seed phrase** into multiple **20-word SLIP-39 shares** using Shamir's Secret Sharing scheme, and to recover the original seed phrase when a required threshold of shares is provided.
+SunderSeed is a browser-based, offline-capable cryptographic tool designed to split a standard **12-word BIP-39 mnemonic seed phrase** into multiple **20-word SLIP-39 shares** using Shamir's Secret Sharing scheme, and to recover the original seed phrase when a required threshold of shares is provided.
 
 ---
 
@@ -39,8 +39,8 @@ Ensure you have [Node.js](https://nodejs.org/) (v18+) installed.
 
 ```bash
 # Clone the repository
-git clone https://github.com/lior21/wordcrux-slip39.git
-cd wordcrux-slip39
+git clone https://github.com/lior21/sunderseed.git
+cd sunderseed
 
 # Install dependencies
 npm install
