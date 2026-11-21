@@ -51,8 +51,8 @@ Ensure you have [Node.js](https://nodejs.org/) (v18+) installed.
 
 ```bash
 # Clone the repository
-git clone https://github.com/lior21/sunderseed.git
-cd sunderseed
+git clone https://github.com/lior21/SunderSeed.git
+cd SunderSeed
 
 # Install dependencies
 npm install

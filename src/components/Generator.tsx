@@ -671,7 +671,7 @@ export default function Generator() {
                   <div className="print-footer-row">
                     <div className="print-footer-repo">
                       <GithubIcon className="h-3.5 w-3.5 text-slate-700" />
-                      <span className="font-mono text-slate-700 font-semibold text-[11px]">lior21/sunderseed</span>
+                      <span className="font-mono text-slate-700 font-semibold text-[11px]">lior21/SunderSeed</span>
                       {versionString && (
                         <>
                           <span className="text-slate-400 font-mono text-[10px] select-none">•</span>

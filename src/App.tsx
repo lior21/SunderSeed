@@ -5,7 +5,7 @@ import Recoverer from './components/Recoverer';
 import { GithubIcon } from './components/GithubIcon';
 import { SunderSeedIcon } from './components/SunderSeedIcon';
 
-const GITHUB_REPO_URL = 'https://github.com/lior21/sunderseed';
+const GITHUB_REPO_URL = 'https://github.com/lior21/SunderSeed';
 const THEME_STORAGE_KEY = 'sunderseed-theme';
 
 type Tab = 'generate' | 'recover';
@@ -130,16 +130,18 @@ function App() {
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 shrink-0">
               <SunderSeedIcon className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <div className="flex items-baseline gap-2">
-                <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-700 via-sky-600 to-blue-700 dark:from-cyan-200 dark:via-sky-200 dark:to-blue-200 bg-clip-text text-transparent">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight leading-none bg-gradient-to-r from-cyan-700 via-sky-600 to-blue-700 dark:from-cyan-200 dark:via-sky-200 dark:to-blue-200 bg-clip-text text-transparent">
                   SunderSeed
                 </h1>
-                <span className="relative -top-[2px] text-[10px] font-semibold px-1.5 py-[1px] bg-cyan-500/10 dark:bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-700 dark:text-cyan-300 font-mono">
+                <span className="text-[10px] font-semibold leading-none px-1.5 py-[1px] bg-cyan-500/10 dark:bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-700 dark:text-cyan-300 font-mono">
                   SLIP39
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:block mt-1">Shamir's Secret Sharing for Mnemonic Seeds</p>
+              <p className="text-xs leading-tight text-slate-500 dark:text-slate-400 font-medium hidden sm:block mt-1">
+                Shamir's Secret Sharing for Mnemonic Seeds
+              </p>
             </div>
           </div>
 
@@ -148,7 +150,7 @@ function App() {
               href={GITHUB_REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              title="View source code on GitHub (lior21/sunderseed)"
+              title="View source code on GitHub (lior21/SunderSeed)"
               aria-label="GitHub Repository"
               className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 hover:border-cyan-500/40 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm hover:shadow-cyan-500/10"
             >
@@ -252,7 +254,7 @@ function App() {
               className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-mono hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
             >
               <GithubIcon className="h-3.5 w-3.5" />
-              lior21/sunderseed
+              lior21/SunderSeed
             </a>
             <span className="text-slate-300 dark:text-slate-700">•</span>
             <a
