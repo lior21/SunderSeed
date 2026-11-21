@@ -47,15 +47,17 @@
   <ellipse cx="790" cy="320" rx="360" ry="240" fill="url(#ogGlowBlue)" />
   <rect width="1200" height="630" fill="url(#ogGrid)" mask="url(#ogGridMask)" />
 
-  <!-- Lockup: icon tile + wordmark (within WhatsApp safe zone) -->
-  <!-- Safe zone: x from 285 to 915 (630px wide), centered in 1200x630 image -->
-  <!-- Lockup shifted right by 6px so entire icon stays within safe zone -->
-  <!-- Text at x=459 left unchanged - was already inside safe zone -->
-  <g transform="translate(291 231)">
+  <!-- Lockup: icon tile + wordmark (vertically centered in WhatsApp 630x630 safe zone) -->
+  <!-- Safe zone: x from 285 to 915 (630px wide), y from 0 to 630, centered at y=315 in 1200x630 image -->
+  <!-- Icon positioned in upper part of safe zone, text in lower part, pair vertically centered at y=315 -->
+  <!-- Icon group origin at y=150, rect spans y=150-318, center at y=234 -->
+  <!-- Text at y=396, center at y=396, vertical midpoint with icon at y=315 -->
+  <g transform="translate(516 160)">
     <rect width="168" height="168" rx="42" fill="url(#ogTile)" />
     <g transform="translate(82 84) scale(2.1) translate(-31 -31.5)">
       <path d="M28 5 L18 22 L12 40 L16 52 L28 58 L38 56 L46 44 L50 28 L40 10 L34 6 Z" fill="#ffffff" />
     </g>
   </g>
-  <text x="459" y="350" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="92" font-weight="700" letter-spacing="-2.2" fill="url(#ogWord)">SunderSeed</text>
+  <!-- Text: "SunderSeed" vertically centered with icon in safe zone (pair midpoint at y=315) -->
+  <text x="600" y="426" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="92" font-weight="700" letter-spacing="-2.2" fill="url(#ogWord)" text-anchor="middle">SunderSeed</text>
 </svg>
