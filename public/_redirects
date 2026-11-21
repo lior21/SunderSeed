@@ -1,0 +1,4 @@
+# Cloudflare Pages rewrites .html URLs to extension-less ones with a 308.
+# Google Search Console requires the verification file to be served at the
+# exact .html URL, so rewrite it back to a 200 response.
+/googleca7aa3f5967f79bf.html  /googleca7aa3f5967f79bf  200
