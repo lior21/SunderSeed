@@ -1,6 +1,18 @@
-# SunderSeed
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/branding/lockup-dark.svg">
+    <img src="docs/branding/lockup-light.svg" alt="SunderSeed" width="340">
+  </picture>
+</p>
 
-> **Secure, client-side Shamir's Secret Sharing (SLIP-0039) tool for BIP-39 wallet seed phrases.**
+<p align="center"><em>Secure, client-side Shamir's Secret Sharing (SLIP-0039) for BIP-39 seed phrases.</em></p>
+
+<p align="center">
+  <img src="docs/branding/badge-slip39.svg" alt="SLIP-39" height="24">
+  <img src="docs/branding/badge-bip39.svg" alt="BIP-39" height="24">
+  <img src="docs/branding/badge-offline.svg" alt="100% offline" height="24">
+  <img src="docs/branding/badge-telemetry.svg" alt="zero telemetry" height="24">
+</p>
 
 SunderSeed is a browser-based, offline-capable cryptographic tool designed to split a standard **12-word BIP-39 mnemonic seed phrase** into multiple **20-word SLIP-39 shares** using Shamir's Secret Sharing scheme, and to recover the original seed phrase when a required threshold of shares is provided.
 
