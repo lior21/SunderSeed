@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sunderseed.pages.dev/sitemap.xml

@@ -7,25 +7,48 @@
     <!-- Primary Meta Tags -->
     <title>SunderSeed — Offline Shamir's Secret Sharing for BIP-39 Seeds</title>
     <meta name="title" content="SunderSeed — Offline Shamir's Secret Sharing for BIP-39 Seeds" />
-    <meta name="description" content="Securely split and recover 12-word BIP-39 wallet seed phrases into 20-word SLIP-39 Shamir shares online or offline. 100% client-side, zero network requests, air-gap ready." />
+    <meta name="description" content="Split and recover 12-word BIP-39 seed phrases into 20-word SLIP-39 Shamir shares. 100% client-side, zero network requests, air-gap ready." />
     <meta name="keywords" content="SLIP-39, SLIP-0039, BIP-39, Shamir Secret Sharing, seed phrase, crypto wallet backup, recovery phrase, bitcoin security, offline tool, air-gapped, sunderseed" />
     <meta name="author" content="lior21 (https://github.com/lior21)" />
     <link rel="author" href="https://github.com/lior21" />
     <meta name="theme-color" content="#060b13" />
+    <link rel="canonical" href="https://sunderseed.pages.dev/" />
+
+    <!-- Apply the saved theme before first paint. Keeps the prerendered
+         markup from flashing light->dark, and mirrors getInitialTheme(). -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('sunderseed-theme');
+          if (t !== 'dark' && t !== 'light') {
+            t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          }
+          document.documentElement.classList.add(t);
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     
     <!-- Favicon (Inlined into Base64 Data URI automatically at build time via Vite plugin) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sunderseed.pages.dev/" />
     <meta property="og:title" content="SunderSeed — Offline Shamir's Secret Sharing for BIP-39 Seeds" />
-    <meta property="og:description" content="Securely split and recover 12-word BIP-39 wallet seed phrases into 20-word SLIP-39 Shamir shares online or offline. 100% client-side, zero network requests, air-gap ready." />
+    <meta property="og:description" content="Split and recover 12-word BIP-39 seed phrases into 20-word SLIP-39 Shamir shares. 100% client-side, zero network requests, air-gap ready." />
     <meta property="og:site_name" content="SunderSeed" />
+    <meta property="og:image" content="https://sunderseed.pages.dev/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="SunderSeed — offline SLIP-39 Shamir secret sharing for BIP-39 seed phrases" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="SunderSeed — Offline Shamir's Secret Sharing for BIP-39 Seeds" />
-    <meta name="twitter:description" content="Securely split and recover 12-word BIP-39 wallet seed phrases into 20-word SLIP-39 Shamir shares online or offline. 100% client-side, zero network requests, air-gap ready." />
+    <meta name="twitter:description" content="Split and recover 12-word BIP-39 seed phrases into 20-word SLIP-39 Shamir shares. 100% client-side, zero network requests, air-gap ready." />
+    <meta name="twitter:image" content="https://sunderseed.pages.dev/og-image.png" />
 
     <!-- Structured Data (JSON-LD) for Search Engine Rich Snippets -->
     <script type="application/ld+json">
