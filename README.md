@@ -86,7 +86,7 @@ npm run lint
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **Cryptographic Libraries**:
   - [`@scure/bip39`](https://github.com/paulmillr/scure-bip39) by Paul Miller (noble/scure) for BIP-39 mnemonic verification & entropy conversion.
-  - [`slip39`](https://github.com/satoshilabs/slips/blob/master/slip-0039.md) for SatoshiLabs SLIP-0039 Shamir's Secret Sharing implementation.
+  - [`slip39`](https://github.com/ilap/slip39-js) (`ilap/slip39-js`) implementing the [SatoshiLabs SLIP-0039](https://github.com/satoshilabs/slips/blob/master/slip-0039.md) Shamir's Secret Sharing specification.
 - **Icons**: [Lucide React](https://lucide.dev/)
 
 ---

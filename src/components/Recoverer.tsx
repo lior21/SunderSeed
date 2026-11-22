@@ -38,6 +38,7 @@ interface ShareInput {
 export type ShareValidationStatus =
   | { type: "valid" }
   | { type: "conflict_identifier"; expectedId: number; actualId: number }
+  | { type: "conflict_extendable"; expectedFlag: number; actualFlag: number }
   | { type: "conflict_iteration"; expectedExp: number; actualExp: number }
   | { type: "conflict_group_count"; expectedCount: number; actualCount: number }
   | { type: "conflict_group_threshold"; expectedThreshold: number; actualThreshold: number }
@@ -523,6 +524,19 @@ export default function Recoverer() {
             type: "conflict_identifier",
             expectedId: session.identifier,
             actualId: meta.identifier,
+          },
+        });
+        return;
+      }
+
+      if (meta.extendableBackupFlag !== session.extendableBackupFlag) {
+        analyzed.push({
+          cardIdx,
+          input,
+          status: {
+            type: "conflict_extendable",
+            expectedFlag: session.extendableBackupFlag,
+            actualFlag: meta.extendableBackupFlag,
           },
         });
         return;

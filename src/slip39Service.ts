@@ -90,6 +90,7 @@ export function pruneSlip39Shares(shares: string[]): string[] {
   const sessionShares = validItems.filter(
     item =>
       item.meta.identifier === session.identifier &&
+      item.meta.extendableBackupFlag === session.extendableBackupFlag &&
       item.meta.iterationExponent === session.iterationExponent &&
       item.meta.groupCount === session.groupCount &&
       item.meta.groupThreshold === session.groupThreshold
@@ -161,6 +162,7 @@ export function slip39ToBip39(shares: string[], passphrase = ''): string {
  */
 export interface ShareMetadata {
   identifier: number;
+  extendableBackupFlag: number;
   iterationExponent: number;
   groupIndex: number;
   groupThreshold: number;
@@ -182,9 +184,11 @@ export function decodeShareMetadata(share: string): ShareMetadata | null {
 
   try {
     // Reconstruct fields from the first 4 words of the share
+    // Words 0-1 (20 bits): [identifier (15 bits) | extendableBackupFlag (1 bit) | iterationExponent (4 bits)]
     const idExpInt = BigInt(indices[0]) * 1024n + BigInt(indices[1]);
     const identifier = Number(idExpInt >> 5n);
-    const iterationExponent = Number(idExpInt & 31n);
+    const extendableBackupFlag = Number((idExpInt >> 4n) & 1n);
+    const iterationExponent = Number(idExpInt & 15n);
 
     const tmp = BigInt(indices[2]) * 1024n + BigInt(indices[3]);
     const groupIndex = Number((tmp >> 16n) & 15n);
@@ -195,6 +199,7 @@ export function decodeShareMetadata(share: string): ShareMetadata | null {
 
     return {
       identifier,
+      extendableBackupFlag,
       iterationExponent,
       groupIndex,
       groupThreshold,
