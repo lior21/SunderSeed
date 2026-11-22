@@ -292,7 +292,7 @@ function App() {
               </>
             )}
           </div>
-          <p>© 2026 SunderSeed. Built with open-source cryptographic libraries for local client-side execution.</p>
+          <p>© 2026 SunderSeed. Built with open-source libraries, including audited BIP-39 primitives, for local client-side execution.</p>
 
           {/* Desktop Security Tip */}
           <p className="hidden sm:block text-slate-500 dark:text-slate-600">
