@@ -51,41 +51,29 @@ function getInitialTheme(): 'dark' | 'light' {
   return 'dark';
 }
 
-async function downloadOfflineApp() {
-  let htmlContent = '';
-  try {
-    const cleanUrl = window.location.href.split('#')[0];
-    const res = await fetch(cleanUrl);
-    if (res.ok) {
-      htmlContent = await res.text();
-    }
-  } catch {
-    // fallback if fetch fails
-  }
-
-  if (!htmlContent) {
-    htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-  }
-
-  // When downloaded for offline / air-gapped usage, inline the SVG favicon as base64
-  // so the downloaded single-file HTML retains its favicon when opened via file:// protocol
-  if (typeof __FAVICON_BASE64__ !== 'undefined' && __FAVICON_BASE64__) {
-    const dataUri = `data:image/svg+xml;base64,${__FAVICON_BASE64__}`;
-    htmlContent = htmlContent.replace(
-      /(<link\s+rel="icon"\s+type="image\/svg\+xml"[^>]*\s+href=")[^"]*"/,
-      `$1${dataUri}"`
-    );
-  }
-
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-
+function downloadOfflineApp() {
   const repoName = typeof __REPO_PREFIX__ !== 'undefined' ? __REPO_PREFIX__ : 'lior21-sunderseed';
   const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
-  link.download = `${repoName}-v${version}.html`;
+  const filename = `${repoName}-v${version}.html`;
 
+  const link = document.createElement('a');
+  link.download = filename;
+
+  // When served over HTTP(S), link directly to the current document URL so the browser
+  // downloads the exact attested dist/index.html bytes without using fetch() (compatible
+  // with `connect-src 'none'`). When already running from file://, fall back to a Blob.
+  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+    link.href = window.location.href.split('#')[0];
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return;
+  }
+
+  const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  link.href = url;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
