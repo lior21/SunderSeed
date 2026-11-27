@@ -21,6 +21,9 @@
   <a href="https://github.com/lior21/SunderSeed/actions/workflows/github-code-scanning/codeql">
     <img src="https://github.com/lior21/SunderSeed/actions/workflows/github-code-scanning/codeql/badge.svg" alt="CodeQL">
   </a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/lior21/SunderSeed">
+    <img src="https://api.scorecard.dev/projects/github.com/lior21/SunderSeed/badge" alt="OpenSSF Scorecard">
+  </a>
   <a href="https://github.com/lior21/SunderSeed/commits/main">
     <img src="https://img.shields.io/github/last-commit/lior21/SunderSeed" alt="GitHub last commit">
   </a>
