@@ -18,8 +18,8 @@
   <a href="https://developer.mozilla.org/en-US/observatory/analyze?host=sunderseed.pages.dev">
     <img src="https://img.shields.io/mozilla-observatory/grade-score/sunderseed.pages.dev?publish" alt="Mozilla HTTP Observatory Grade">
   </a>
-  <a href="https://github.com/lior21/SunderSeed/actions/workflows/github-code-scanning/codeql">
-    <img src="https://github.com/lior21/SunderSeed/actions/workflows/github-code-scanning/codeql/badge.svg" alt="CodeQL">
+  <a href="https://github.com/lior21/SunderSeed/actions/workflows/codeql.yml">
+    <img src="https://github.com/lior21/SunderSeed/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
   </a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/lior21/SunderSeed">
     <img src="https://api.scorecard.dev/projects/github.com/lior21/SunderSeed/badge" alt="OpenSSF Scorecard">
