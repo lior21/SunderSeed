@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/branding/lockup-dark.svg">
-    <img src="docs/branding/lockup-light.svg" alt="SunderSeed" width="340">
+    <img src="docs/branding/lockup-light.svg" alt="SunderSeed" width="280">
   </picture>
 </p>
 
