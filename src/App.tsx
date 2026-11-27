@@ -72,8 +72,8 @@ async function downloadOfflineApp() {
   if (typeof __FAVICON_BASE64__ !== 'undefined' && __FAVICON_BASE64__) {
     const dataUri = `data:image/svg+xml;base64,${__FAVICON_BASE64__}`;
     htmlContent = htmlContent.replace(
-      /<link rel="icon" type="image\/svg\+xml" href="[^"]*"/,
-      `<link rel="icon" type="image/svg+xml" href="${dataUri}"`
+      /(<link\s+rel="icon"\s+type="image\/svg\+xml"[^>]*\s+href=")[^"]*"/,
+      `$1${dataUri}"`
     );
   }
 
