@@ -14,6 +14,21 @@
   <img src="docs/branding/badge-telemetry.svg" alt="zero telemetry" height="24">
 </p>
 
+<p align="center">
+  <a href="https://developer.mozilla.org/en-US/observatory/analyze?host=sunderseed.pages.dev">
+    <img src="https://img.shields.io/mozilla-observatory/grade-score/sunderseed.pages.dev?publish" alt="Mozilla HTTP Observatory Grade">
+  </a>
+  <a href="https://github.com/lior21/SunderSeed/actions/workflows/github-code-scanning/codeql">
+    <img src="https://github.com/lior21/SunderSeed/actions/workflows/github-code-scanning/codeql/badge.svg" alt="CodeQL">
+  </a>
+  <a href="https://github.com/lior21/SunderSeed/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/lior21/SunderSeed" alt="GitHub">
+  </a>
+  <a href="https://github.com/lior21/SunderSeed/commits/main">
+    <img src="https://img.shields.io/github/last-commit/lior21/SunderSeed" alt="GitHub last commit">
+  </a>
+</p>
+
 SunderSeed is a browser-based, offline-capable cryptographic tool designed to split a standard **12-word BIP-39 mnemonic seed phrase** into multiple **20-word SLIP-39 shares** using Shamir's Secret Sharing scheme, and to recover the original seed phrase when a required threshold of shares is provided.
 
 ---
