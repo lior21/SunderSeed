@@ -42,7 +42,8 @@ const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" w
   </g>
 </svg>`;
 
-fs.writeFileSync(path.join(publicDir, 'favicon.svg'), iconSvg, 'utf-8');
+// Notice: public/favicon.svg is kept as the transparent gradient seed for browser tabs.
+// The raster suite below generates the squircle app tile for Google Search and mobile devices.
 
 const htmlPage = `<!DOCTYPE html>
 <html>
