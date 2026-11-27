@@ -30,8 +30,13 @@
       })();
     </script>
     
-    <!-- Favicon (Inlined into Base64 Data URI automatically at build time via Vite plugin) -->
+    <!-- Favicon / App Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -50,12 +55,22 @@
     <meta name="twitter:description" content="Split and recover 12-word BIP-39 seed phrases into 20-word SLIP-39 Shamir shares. 100% client-side, zero network requests, air-gap ready." />
     <meta name="twitter:image" content="https://sunderseed.pages.dev/og-image.png" />
 
-    <!-- Structured Data (JSON-LD) for Search Engine Rich Snippets -->
+    <!-- Structured Data (JSON-LD) for Search Engine Site Name & Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "SunderSeed",
+      "alternateName": ["SunderSeed App"],
+      "url": "https://sunderseed.pages.dev/"
+    }
+    </script>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "SunderSeed",
+      "url": "https://sunderseed.pages.dev/",
       "operatingSystem": "All",
       "applicationCategory": "SecurityApplication",
       "offers": {

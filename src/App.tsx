@@ -67,6 +67,16 @@ async function downloadOfflineApp() {
     htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
   }
 
+  // When downloaded for offline / air-gapped usage, inline the SVG favicon as base64
+  // so the downloaded single-file HTML retains its favicon when opened via file:// protocol
+  if (typeof __FAVICON_BASE64__ !== 'undefined' && __FAVICON_BASE64__) {
+    const dataUri = `data:image/svg+xml;base64,${__FAVICON_BASE64__}`;
+    htmlContent = htmlContent.replace(
+      /<link rel="icon" type="image\/svg\+xml" href="[^"]*"/,
+      `<link rel="icon" type="image/svg+xml" href="${dataUri}"`
+    );
+  }
+
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

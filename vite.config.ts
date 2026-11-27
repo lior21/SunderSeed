@@ -28,27 +28,16 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
 const repoPrefix = getRepoPrefix(pkg.name)
 const appVersion = process.env.APP_VERSION || pkg.version
 
-function inlineFaviconPlugin() {
-  return {
-    name: 'inline-favicon-base64',
-    transformIndexHtml(html: string) {
-      const faviconPath = path.resolve(__dirname, 'public/favicon.svg')
-      if (fs.existsSync(faviconPath)) {
-        const svgContent = fs.readFileSync(faviconPath, 'utf-8')
-        const base64 = Buffer.from(svgContent).toString('base64')
-        const dataUri = `data:image/svg+xml;base64,${base64}`
-        return html.replace(/<link\s+rel="icon"[^>]*>/i, `<link rel="icon" type="image/svg+xml" href="${dataUri}" />`)
-      }
-      return html
-    },
-  }
-}
+const faviconPath = path.resolve(__dirname, 'public/favicon.svg')
+const faviconSvg = fs.existsSync(faviconPath) ? fs.readFileSync(faviconPath, 'utf-8') : ''
+const faviconBase64 = Buffer.from(faviconSvg).toString('base64')
 
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
     __REPO_PREFIX__: JSON.stringify(repoPrefix),
+    __FAVICON_BASE64__: JSON.stringify(faviconBase64),
   },
 
   plugins: [
@@ -62,7 +51,6 @@ export default defineConfig({
       },
     }),
     viteSingleFile({ removeViteModuleLoader: true }),
-    inlineFaviconPlugin(),
   ],
   build: {
     assetsInlineLimit: 100000,
