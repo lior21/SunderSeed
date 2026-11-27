@@ -9,3 +9,10 @@ updates:
       github-actions:
         patterns:
           - "*"
+    # Minor/patch updates land as one grouped PR. Major versions (e.g. the
+    # v4 -> v7 jumps for actions/checkout) change runner requirements and
+    # inputs, so they are reviewed and pinned by hand instead of auto-opened.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
