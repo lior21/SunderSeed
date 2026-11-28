@@ -35,10 +35,10 @@ SunderSeed is a browser-based, offline-capable cryptographic tool designed to sp
 
 ## 🌟 Key Features
 
-- **🔐 BIP-39 ➔ SLIP-39 Share Generation**: Split 12-word recovery seeds into custom $N$-of-$M$ SLIP-39 shares.
+- **🔐 BIP-39 ➔ SLIP-39 Share Generation**: Split 12-word recovery seeds into custom *N*-of-*M* SLIP-39 shares.
 - **🛡️ Simple & Advanced Multi-Group Schemes**:
   - **Simple Mode**: Single threshold group (e.g. any 2-of-3 shares).
-  - **Advanced Multi-Group Mode**: Complex multi-group threshold structures (e.g. require shares from $K$-of-$L$ distinct groups).
+  - **Advanced Multi-Group Mode**: Complex multi-group threshold structures (e.g. require shares from *K*-of-*L* distinct groups).
 - **🔄 SLIP-39 ➔ BIP-39 Recovery**: Reconstruct original master seeds with real-time metadata analysis (Group ID, Share Indices, Threshold progress).
 - **🪄 Auto-Fix Single-Word Typos**: Automatically detects and offers interactive single-word error correction for damaged or mistyped shares using SLIP-39's 1024-word list & Reed-Solomon checksum distance.
 - **🖨️ Printable A4 Share Cards**: Built-in, clean print templates for physical paper backups with grid alignment, metadata tags, versioning, and timestamps.
